@@ -105,7 +105,7 @@ Another example configuration file, without a base namespace::
     other = Namespace()
     other.setting = 'anyconfig_value'
 
-Showing the overrided settings::
+Showing the plugin-specified settings::
 
     >>> import pyconfig
     >>> pyconfig.get('my.setting', 'default')
