@@ -78,11 +78,14 @@ loaded. An example ``setup.py``::
                 # The "my" in "my =" indicates a base namespace to use for
                 # the contained configuration. If you do not wish a base
                 # namespace, use "any"
-                'pyconfig':['my = myconfig'],
+                'pyconfig':[
+                      'my = myconfig',
+                      'any = anyconfig',
+                      ],
                 },
             )
 
-An example configuration file::
+An example distutils plugin configuration file::
 
     # __file__ = myconfig.py
     from pyconfig import Namespace
