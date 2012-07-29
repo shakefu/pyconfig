@@ -42,7 +42,7 @@ map to the current setting stored in the singleton::
 
 Pyconfig allows you to override settings via a python configuration file, that
 defines its configuration keys as a module namespace. By default, Pyconfig will
-look on your `PYTHONPATH` for a module named `localconfig`, and if it exists, it
+look on your ``PYTHONPATH`` for a module named ``localconfig``, and if it exists, it
 will use this module namespace to update all configuration settings::
 
     # __file__ = "$PYTHONPATH/localconfig.py"
@@ -55,7 +55,7 @@ will use this module namespace to update all configuration settings::
     my.nested = Namespace()
     my.nested.setting = 'also_from_localconfig'
 
-With a `localconfig` on the `PYTHONPATH`, it will be loaded before any settings
+With a ``localconfig`` on the ``PYTHONPATH``, it will be loaded before any settings
 are read::
 
     >>> import pyconfig
@@ -65,7 +65,7 @@ are read::
     'also_from_localconfig'
 
 Pyconfig also allows you to create distutils plugins that are automatically
-loaded. An example `setup.py`::
+loaded. An example ``setup.py``::
 
     # __file__ = setup.py
     from setuptools import setup
