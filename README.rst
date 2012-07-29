@@ -8,7 +8,7 @@ Code Examples
 -------------
 
 The most basic usage allows you to get, retrieve and modify values. Pyconfig's
-singleton provides convenient accessor methods for these actions:
+singleton provides convenient accessor methods for these actions::
 
     >>> import pyconfig
     >>> pyconfig.get('my.setting', 'default')
@@ -21,7 +21,7 @@ singleton provides convenient accessor methods for these actions:
     'default'
 
 Pyconfig also provides shortcuts for giving classes property descriptors which
-map to the current setting stored in the singleton:
+map to the current setting stored in the singleton::
 
     >>> import pyconfig
     >>> class MyClass(object):
@@ -43,7 +43,7 @@ map to the current setting stored in the singleton:
 Pyconfig allows you to override settings via a python configuration file, that
 defines its configuration keys as a module namespace. By default, Pyconfig will
 look on your `PYTHONPATH` for a module named `localconfig`, and if it exists, it
-will use this module namespace to update all configuration settings:
+will use this module namespace to update all configuration settings::
 
     # __file__ = "$PYTHONPATH/localconfig.py"
     from pyconfig import Namespace
@@ -56,7 +56,7 @@ will use this module namespace to update all configuration settings:
     my.nested.setting = 'also_from_localconfig'
 
 With a `localconfig` on the `PYTHONPATH`, it will be loaded before any settings
-are read:
+are read::
 
     >>> import pyconfig
     >>> pyconfig.get('my.setting')
@@ -65,7 +65,7 @@ are read:
     'also_from_localconfig'
 
 Pyconfig also allows you to create distutils plugins that are automatically
-loaded. An example `setup.py`:
+loaded. An example `setup.py`::
 
     # __file__ = setup.py
     from setuptools import setup
@@ -82,7 +82,7 @@ loaded. An example `setup.py`:
                 },
             )
 
-An example configuration file:
+An example configuration file::
 
     # __file__ = myconfig.py
     from pyconfig import Namespace
@@ -95,14 +95,14 @@ An example configuration file:
     nested = Namespace()
     nested.setting = 'also_from_plugin'
 
-Another example configuration file, without a base namespace:
+Another example configuration file, without a base namespace::
 
     # __file__ = anyconfig.py
     from pyconfig import Namespace
     other = Namespace()
     other.setting = 'anyconfig_value'
 
-Showing the overrided settings:
+Showing the overrided settings::
 
     >>> import pyconfig
     >>> pyconfig.get('my.setting', 'default')
@@ -114,7 +114,7 @@ Showing the overrided settings:
     >>> pyconfig.get('other.setting', 'default')
     'anyconfig_value'
 
-More fancy stuff:
+More fancy stuff::
 
     >>> # Reloading changes re-calls functions...
     >>> pyconfig.reload()
