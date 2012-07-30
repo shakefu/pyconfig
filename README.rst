@@ -129,4 +129,21 @@ More fancy stuff::
     >>> import signal
     >>> signal.signal(signal.SIGUSR1, pyconfig.reload)
 
+Pyconfig provides a ``@reload_hook`` decorator that allows you to register
+functions or methods to be called when the configuration is reloaded::
+
+      >>> import pyconfig
+      >>> @pyconfig.reload_hook
+      ... def reload():
+      ...     print "Do something here."
+      ...     
+      >>> pyconfig.reload()
+      Do something here.
+
+:warning: This should not be used to register large numbers of methods (e.g.
+          registering a bound method in a class's ``__init__`` method), since
+          there is no way to un-register a hook.
+
+:note: Because the reload hooks are called without arguments, it will not work
+       with unbound methods or classmethods.
 
