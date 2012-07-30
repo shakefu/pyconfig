@@ -13,7 +13,7 @@ def README():
 
 setup(
         name='pyconfig',
-        version='1.0.2',
+        version='1.0.3',
         description="Python-based singleton configuration",
         long_description=README(),
         author="Jacob Alheid",
@@ -25,6 +25,13 @@ setup(
             'nose',
             'coverage',
             'mock',
+            ],
+        classifiers=[
+            'Development Status :: 5 - Production/Stable',
+            'Intended Audience :: Developers',
+            'Programming Language :: Python :: 2.7',
+            'Topic :: Software Development :: Libraries :: Python Modules',
+            'Topic :: Utilities',
             ],
         )
 
