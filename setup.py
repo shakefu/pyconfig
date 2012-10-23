@@ -14,7 +14,7 @@ def README():
 
 setup(
         name='pyconfig',
-        version='1.0.3',
+        version='1.1.0',
         description="Python-based singleton configuration",
         long_description=README(),
         author="Jacob Alheid",

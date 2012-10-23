@@ -149,3 +149,15 @@ functions or methods to be called when the configuration is reloaded::
 
 :note: Because the reload hooks are called without arguments, it will not work
        with unbound methods or classmethods.
+
+Changes
+-------
+
+This section contains descriptions of changes in each new version.
+
+1.1.0
+^^^^^
+
+* Allow for implicitly nesting Namespaces when accessing attributes that are
+  undefined
+
