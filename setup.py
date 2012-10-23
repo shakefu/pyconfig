@@ -6,15 +6,14 @@ from setuptools import setup, find_packages
 def README():
     try:
         return open(os.path.join(os.path.dirname(__file__),
-            'README.rst')).read()
+            'README')).read()
     except:
-        raise
         pass
 
 
 setup(
         name='pyconfig',
-        version='1.1.0',
+        version='1.1.1',
         description="Python-based singleton configuration",
         long_description=README(),
         author="Jacob Alheid",
