@@ -8,6 +8,9 @@ import logging
 import pkg_resources
 
 
+__version__ = '1.1.2'
+
+
 log = logging.getLogger(__name__)
 
 

@@ -2,6 +2,8 @@ import multiprocessing, logging # Fix atexit bug
 import os
 from setuptools import setup, find_packages
 
+import pyconfig
+
 
 def README():
     try:
@@ -13,12 +15,12 @@ def README():
 
 setup(
         name='pyconfig',
-        version='1.1.1',
+        version=pyconfig.__version__,
         description="Python-based singleton configuration",
         long_description=README(),
         author="Jacob Alheid",
         author_email="jake@about.me",
-        url="http://github.com/shakefu/pyconfig",
+        url="http://github.com/aol/pyconfig",
         py_modules=['pyconfig'],
         test_suite='nose.collector',
         tests_require=[
