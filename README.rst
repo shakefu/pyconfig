@@ -155,6 +155,11 @@ Changes
 
 This section contains descriptions of changes in each new version.
 
+1.1.2
+^^^^^
+
+* Move version string into `pyconfig.__version__`
+
 1.1.1
 ^^^^^
 
