@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 def README():
     try:
         return open(os.path.join(os.path.dirname(__file__),
-            'README')).read()
+            'README.rst')).read()
     except:
         pass
 
