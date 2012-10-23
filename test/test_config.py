@@ -45,6 +45,15 @@ def test_namespace_deep_nested():
         'ns.nest.deep.test': True})
 
 
+def test_namespace_implicit_nesting():
+    ns = pyconfig.Namespace()
+    ns.test = True
+    ns.nest.test = True
+    ns.nest.deep.test = True
+    eq_(dict(ns._get_config('ns')), {'ns.nest.test': True, 'ns.test': True,
+        'ns.nest.deep.test': True})
+
+
 def test_set_and_get():
     pyconfig.set('set_and_get', 'tested')
     eq_(pyconfig.get('set_and_get'), 'tested')

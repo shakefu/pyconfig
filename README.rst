@@ -52,7 +52,8 @@ will use this module namespace to update all configuration settings::
     # key names
     my = Namespace()
     my.setting = 'from_localconfig'
-    my.nested = Namespace()
+    # Namespace objects implicitly return new nested Namespaces when accessing
+    # attributes that don't exist
     my.nested.setting = 'also_from_localconfig'
 
 With a ``localconfig`` on the ``PYTHONPATH``, it will be loaded before any settings
@@ -148,4 +149,3 @@ functions or methods to be called when the configuration is reloaded::
 
 :note: Because the reload hooks are called without arguments, it will not work
        with unbound methods or classmethods.
-

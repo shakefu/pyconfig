@@ -21,7 +21,6 @@ class Namespace(object):
         from pyconfig import Namespace
 
         pyconfig = Namespace()
-        pyconfig.example = Namespace()
         pyconfig.example.setting = True
 
     """
@@ -35,7 +34,18 @@ class Namespace(object):
         object.__setattr__(self, name, value)
         self._config[name] = value
 
+    def __getattr__(self, name):
+        # Allow implicit nested namespaces by attribute access
+        new_space = Namespace()
+        setattr(self, name, new_space)
+        return new_space
+
     def _get_config(self, base_name):
+        """ Return iterator which returns ``(key, value)`` tuples.
+
+            :param str base_name: Base namespace
+
+        """
         for name, value in self._config.items():
             name = base_name + '.' + name
             # Allow for nested namespaces
