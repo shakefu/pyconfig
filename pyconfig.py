@@ -8,7 +8,7 @@ import logging
 import pkg_resources
 
 
-__version__ = '1.1.2'
+__version__ = '1.2.0'
 
 
 log = logging.getLogger(__name__)
@@ -98,7 +98,7 @@ class Config(object):
             :param value: Setting value.
 
         """
-        log.info("    {} = {}".format(name, repr(value)))
+        log.info("    %s = %s", name, repr(value))
         self.settings[name] = value
 
     def _update(self, conf_dict, base_name=None):
@@ -149,7 +149,7 @@ class Config(object):
             if conf.attrs:
                 raise RuntimeError("config must be a module")
             mod_name = conf.module_name
-            log.info("Loading module '{}'".format(mod_name))
+            log.info("Loading module '%s'", mod_name)
             mod_dict = runpy.run_module(mod_name)
             base_name = conf.name if conf.name != 'any' else None
             self._update(mod_dict, base_name)

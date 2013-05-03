@@ -1,6 +1,6 @@
 import multiprocessing, logging # Fix atexit bug
 import os
-from setuptools import setup, find_packages
+from setuptools import setup
 
 import pyconfig
 
