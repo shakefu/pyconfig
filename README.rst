@@ -155,6 +155,11 @@ Changes
 
 This section contains descriptions of changes in each new version.
 
+1.2.0
+^^^^^
+
+* No longer uses Python 2.7 `format()`. Should work on 2.6 and maybe earlier.
+
 1.1.2
 ^^^^^
 
