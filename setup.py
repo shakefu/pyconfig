@@ -19,7 +19,7 @@ setup(
         description="Python-based singleton configuration",
         long_description=README(),
         author="Jacob Alheid",
-        author_email="jake@about.me",
+        author_email="jake@team.about.me",
         url="http://github.com/aol/pyconfig",
         py_modules=['pyconfig'],
         test_suite='nose.collector',
