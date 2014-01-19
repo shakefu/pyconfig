@@ -144,14 +144,31 @@ class Config(object):
         if clear:
             self.settings = {}
 
+        defer = []
+
         # Load all config plugins
         for conf in pkg_resources.iter_entry_points('pyconfig'):
             if conf.attrs:
                 raise RuntimeError("config must be a module")
+
             mod_name = conf.module_name
+            base_name = conf.name if conf.name != 'any' else None
+
             log.info("Loading module '%s'", mod_name)
             mod_dict = runpy.run_module(mod_name)
-            base_name = conf.name if conf.name != 'any' else None
+
+            # If this module wants to be deferred, save it for later
+            if mod_dict.get('deferred', None) is deferred:
+                log.info("Deferring module '%s'", mod_name)
+                mod_dict.pop('deferred')
+                defer.append((mod_name, base_name, mod_dict))
+                continue
+
+            self._update(mod_dict, base_name)
+
+        # Load deferred modules
+        for mod_name, base_name, mod_dict in defer:
+            log.info("Loading deferred module '%s'", mod_name)
             self._update(mod_dict, base_name)
 
         # Allow localconfig overrides
@@ -223,4 +240,7 @@ def reload_hook(func):
     return func
 
 
+def deferred():
+    """ Indicates a module which imports this should defer loading. """
+    pass
 
