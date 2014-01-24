@@ -79,8 +79,9 @@ def _get_module_filename(module):
 
     If it cannot be imported ``None`` is returned.
 
-    If the ``__file__`` attribute is missing, an :class:`Unparsable` instance
-    is returned.
+    If the ``__file__`` attribute is missing, or the module or package is a
+    compiled egg, then an :class:`Unparsable` instance is returned, since the
+    source can't be retrieved.
 
     :param module: A module name, such as ``'test.test_config'``
     :type module: str
@@ -107,9 +108,13 @@ def _get_module_filename(module):
             # No filename? Nothing to do here
             return Unparseable()
 
-        # If we get a .pyc, we want the .py so we can parse the source
+        # If we get a .pyc, strip the c to get .py so we can parse the source
         if filename.endswith('.pyc'):
             filename = filename[:-1]
+            if not os.path.exists(filename) and os.path.isfile(filename):
+                # If there's only a .pyc and no .py it's a compile package or
+                # egg and we can't get at the source for parsing
+                return Unparseable()
         # If we have a package, we want the directory not the init file
         if filename.endswith('__init__.py'):
             filename = filename[:-11]
