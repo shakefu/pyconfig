@@ -1,14 +1,14 @@
 """
-#############
-Cypher Config
-#############
+Pyconfig
+========
+
 """
 import runpy
 import logging
 import pkg_resources
 
 
-__version__ = '1.2.0'
+__version__ = '2.0.0-dev'
 
 
 log = logging.getLogger(__name__)
@@ -241,6 +241,24 @@ def reload_hook(func):
 
 
 def deferred():
-    """ Indicates a module which imports this should defer loading. """
+    """
+    Import this to indicate that a module should be deferred to load its
+    settings last. This allows you to override some settings from a pyconfig
+    plugin with another plugin in a reliable manner.
+
+    This is a special instance that pyconfig looks for by name. You must use
+    the import style ``from pyconfig import deferred`` for this to work.
+
+    If you are not deferring a module, you may use ``deferred`` as a variable
+    name without confusing or conflicting with pyconfig's behavior.
+
+    Example::
+
+        from pyconfig import Namespace, deferred
+
+        my_settings = Namespace()
+        my_settings.some_setting = 'overridden by deferred'
+
+    """
     pass
 

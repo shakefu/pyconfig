@@ -137,3 +137,13 @@ def test_setting_shortcut():
     eq_(Test.setting, 'tested')
     eq_(Test().setting, 'tested')
 
+
+def test_get_default_with_various_values():
+    eq_(pyconfig.get('default_num', 1), 1)
+    eq_(pyconfig.get('default_num', 1.0), 1.0)
+    eq_(pyconfig.get('default_none', None), None)
+    eq_(pyconfig.get('default_true', True), True)
+    eq_(pyconfig.get('default_false', False), False)
+    eq_(pyconfig.get('default_unicode', u'Test'), u'Test')
+    eq_(pyconfig.get('default_expr', 60*24), 60*24)
+

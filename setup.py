@@ -28,6 +28,11 @@ setup(
             'coverage',
             'mock',
             ],
+        entry_points={
+            'console_scripts':[
+                'pyconfig = pyconfig.scripts:main',
+                ],
+            },
         classifiers=[
             'Development Status :: 5 - Production/Stable',
             'Intended Audience :: Developers',
