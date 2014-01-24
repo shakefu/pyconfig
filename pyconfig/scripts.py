@@ -1,9 +1,18 @@
 import os
+import re
 import ast
 import sys
 import _ast
 import runpy
 import argparse
+
+# Pygments is optional but allows for colorization of output
+try:
+    import pygments
+    import pygments.lexers
+    import pygments.formatters
+except ImportError:
+    pygments = None
 
 
 def main():
@@ -13,50 +22,204 @@ def main():
     """
     parser = argparse.ArgumentParser(description="Helper for working with "
             "pyconfigs")
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument('-f', '--filename',
+    target_group = parser.add_mutually_exclusive_group()
+    target_group.add_argument('-f', '--filename',
             help="Parse an individual file or directory",
             metavar='F')
-    group.add_argument('-m', '--module',
+    target_group.add_argument('-m', '--module',
             help="Parse a package or module, recursively looking inside it",
             metavar='M')
+    parser.add_argument('-v', '--view-call',
+            help="Show the actual pyconfig call made (default: show namespace)",
+            action='store_true')
+    key_group = parser.add_mutually_exclusive_group()
+    key_group.add_argument('-a', '--all',
+            help="Show all pyconfig key references",
+            action='store_true')
+    key_group.add_argument('-k', '--only-keys',
+            help="Show a list of discovered keys without values",
+            action='store_true')
+    parser.add_argument('-n', '--natural-sort',
+            help="Sort by filename and line (default: alphabetical by key)",
+            action='store_true')
+    parser.add_argument('-s', '--source',
+            help="Show source annotations (implies --natural-sort)",
+            action='store_true')
+    parser.add_argument('-c', '--color',
+            help="Toggle output colors (default: %s)" % bool(pygments),
+            action='store_const', default=bool(pygments),
+            const=(not bool(pygments)))
     args = parser.parse_args()
 
-    # We'll use this later since the module argument might load a filename
-    filename = args.filename
+    if args.color and not pygments:
+        _error("Pygments is required for color output.\n"
+                "    pip install pygments")
 
     if args.module:
-        module = _get_module_filename(args.module)
-        if not module:
-            _error("Could not load module or package: %r", args.module)
-        elif isinstance(module, Unparseable):
-            _error("Could not determine module source: %r", args.module)
+        # TODO: Break out module handling into its own function
+        _handle_module(args)
 
-        if os.path.isfile(module):
-            filename = module
-        elif os.path.isdir(module):
-            # TODO(shakefu): Handle directory walking to find all subfiles
-            print "Found package:", module
-        else:
-            # XXX(shakefu): This is an error of some sort, maybe symlinks?
-            # Probably need some thorough testing
-            _error("Could not determine file type: %r", args.module)
+    if args.filename:
+        _handle_file(args)
 
-    if filename:
-        if not os.path.isfile(filename):
-            _error("Not a file: %r", filename)
 
-        calls = _parse_file(filename)
-        if not calls:
-            # XXX(shakefu): Probably want to change this to not be an error and
-            # just be a normal fail (e.g. command runs, no output).
-            _error("No pyconfig calls.")
+class Unparseable(object):
+    """
+    This class represents an argument to a pyconfig setting that couldn't be
+    easily parsed - e.g. was not a basic type.
 
-        # XXX(shakefu): This is temporary output for testing
-        for method, key, default in sorted(calls, key=lambda c: c[1]):
-            default = ', '.join(repr(v) for v in default)
-            default = ', ' + default if default else ''
-            print "pyconfig.%s(%r%s)" % (method, key, default)
+    """
+    def __repr__(self):
+        return '<unparsed>'
+
+
+class NotSet(object):
+    """
+    This class represents a default value which is not set.
+
+    """
+    def __repr__(self):
+        return '<not set>'
+
+
+class _PyconfigCall(object):
+    """
+    This class represents a pyconfig call along with its metadata.
+
+    :param method: The method used, one of ``set``, ``get`` or ``setting``
+    :param key: The pyconfig key
+    :param default: The default value for the key if specified
+    :param source: A 4-tuple of (filename, source line, line number, column)
+    :type method: str
+    :type key: str
+    :type default: list
+    :type source: tuple
+
+    """
+    def __init__(self, method, key, default, source):
+        self.method = method
+        self.key = key
+        self.default = default
+        self.filename, self.source, self.lineno, self.col_offset = source
+
+    def as_namespace(self, namespace=None):
+        """
+        Return this call as if it were being assigned in a pyconfig namespace.
+
+        If `namespace` is specified and matches the top level of this call's
+        :attr:`key`, then that section of the key will be removed.
+
+        """
+        key = self.key
+        if namespace and key.startswith(namespace):
+            key = key[len(namespace) + 1:]
+
+        return "%s = %s" % (self.get_key(), self._default() or NotSet())
+
+    def as_call(self):
+        """
+        Return this call as it is called in its source.
+
+        """
+        default = self._default()
+        default = ', ' + default if default else ''
+        return "pyconfig.%s(%r%s)" % (self.method, self.get_key(), default)
+
+    def annotation(self):
+        """
+        Return this call's source annotation.
+
+        """
+        # XXX(Jake): We may want to change this to be relative to the filename
+        # or what have you... will have to see how it works with modules
+        # filename = os.path.relpath(self.filename, os.getcwd())
+        # return "# %s (%s): %s" % (filename, self.lineno, self.source.strip())
+        return "# %s, line %s" % (self.filename, self.lineno)
+
+    def _source_call_only(self):
+        """
+        Return the source line stripped down to just the pyconfig call.
+
+        """
+        line = self.source[self.col_offset:]
+        regex = re.compile('''(pyconfig\.[eginst]+\(['"][^)]+?['"].*?\))''')
+        match = regex.match(line)
+        if not match:
+            # Fuck it, return the whole line
+            return self.source
+
+        return match.group(1)
+
+    def _default_value_only(self):
+        """
+        Return only the default value, if there is one.
+
+        """
+        line = self.source[self.col_offset:]
+        regex = re.compile('''pyconfig\.[eginst]+\(['"][^)]+?['"], ?(.*?)\)''')
+        match = regex.match(line)
+        if not match:
+            return ''
+
+        return match.group(1)
+
+    def get_key(self):
+        """
+        Return the call key, even if it has to be parsed from the source.
+
+        """
+        if not isinstance(self.key, Unparseable):
+            return self.key
+
+        line = self.source[self.col_offset:]
+        regex = re.compile('''pyconfig\.[eginst]+\(([^,]+).*?\)''')
+        match = regex.match(line)
+        if not match:
+            return Unparsable()
+
+        return "<%s>" % match.group(1)
+
+
+    def _default(self):
+        """
+        Return the default argument, formatted nicely.
+
+        """
+        # This is to look for unparsable values, and if we find one, we try to
+        # directly parse the string
+        for v in self.default:
+            if isinstance(v, Unparseable):
+                default = self._default_value_only()
+                if default:
+                    return default
+        # Otherwise just make it a string and go
+        return ', '.join(str(v) for v in self.default)
+
+    def __repr__(self):
+        return self.as_call()
+
+
+def _handle_module(args):
+    """
+    Handles the -m argument.
+
+    """
+    module = _get_module_filename(args.module)
+    if not module:
+        _error("Could not load module or package: %r", args.module)
+    elif isinstance(module, Unparseable):
+        _error("Could not determine module source: %r", args.module)
+
+    _parse_and_output(module, args)
+
+
+def _handle_file(args):
+    """
+    Handle the --file argument.
+
+    """
+    filename = args.filename
+    _parse_and_output(filename, args)
 
 
 def _error(msg, *args):
@@ -80,7 +243,7 @@ def _get_module_filename(module):
     If it cannot be imported ``None`` is returned.
 
     If the ``__file__`` attribute is missing, or the module or package is a
-    compiled egg, then an :class:`Unparsable` instance is returned, since the
+    compiled egg, then an :class:`Unparseable` instance is returned, since the
     source can't be retrieved.
 
     :param module: A module name, such as ``'test.test_config'``
@@ -126,36 +289,178 @@ def _get_module_filename(module):
         return
 
 
-class Unparseable(object):
+def _parse_and_output(filename, args):
     """
-    This class represents an argument to a pyconfig setting that couldn't be
-    easily parsed - e.g. was not a basic type.
+    Parse `filename` appropriately and then output calls according to the
+    `args` specified.
 
-    """
-    def __repr__(self):
-        return '<unparsed>'
-
-
-def _parse_file(filename):
-    """
-    Return XXX from parsing `filename`.
-
-    :param filename: A file to parse
+    :param filename: A file or directory
+    :param args: Command arguments
     :type filename: str
 
     """
-    # This is a mapping of string names which are Python values
-    name_map = {
-            'True': True,
-            'False': False,
-            'None': None,
-            }
+    relpath = os.path.dirname(filename)
+    if os.path.isfile(filename):
+        calls = _parse_file(filename, relpath)
+    elif os.path.isdir(filename):
+        calls = _parse_dir(filename, relpath)
+    else:
+        # XXX(shakefu): This is an error of some sort, maybe symlinks?
+        # Probably need some thorough testing
+        _error("Could not determine file type: %r", filename)
 
+    if not calls:
+        # XXX(shakefu): Probably want to change this to not be an error and
+        # just be a normal fail (e.g. command runs, no output).
+        _error("No pyconfig calls.")
+
+    _output(calls, args)
+
+
+def _output(calls, args):
+    """
+    Outputs `calls`.
+
+    :param calls: List of :class:`_PyconfigCall` instances
+    :param args: :class:`~argparse.ArgumentParser` instance
+    :type calls: list
+    :type args: argparse.ArgumentParser
+
+    """
+    # Sort the keys appropriately
+    if args.natural_sort or args.source:
+        calls = sorted(calls, key=lambda c: (c.filename, c.lineno))
+    else:
+        calls = sorted(calls, key=lambda c: c.key)
+
+    out = []
+
+    # Handle displaying only the list of keys
+    if args.only_keys:
+        keys = set()
+        for call in calls:
+            if call.key in keys:
+                continue
+            out.append(_format_call(call, args))
+            keys.add(call.key)
+
+        out = '\n'.join(out)
+        if args.color:
+            out = _colorize(out)
+        print out,
+
+        # We're done here
+        return
+
+    # Build a list of keys which have default values available, so that we can
+    # toggle between displaying only those keys with defaults and all keys
+    keys = set()
+    for call in calls:
+        if call.default:
+            keys.add(call.key)
+
+    for call in calls:
+        if not args.all and not call.default and call.key in keys:
+            continue
+        out.append(_format_call(call, args))
+
+    out = '\n'.join(out)
+    if args.color:
+        out = _colorize(out)
+    print out,
+
+
+def _format_call(call, args):
+    """
+    Return `call` formatted appropriately for `args`.
+
+    :param call: A pyconfig call object
+    :param args: Arguments from the command
+    :type call: :class:`_PyconfigCall`
+
+    """
+    out = ''
+    if args.source:
+        out += call.annotation() + '\n'
+
+    if args.only_keys:
+        out += call.get_key()
+        return out
+
+    if args.view_call:
+        out += call.as_call()
+    else:
+        out += call.as_namespace()
+
+    return out
+
+
+def _colorize(output):
+    """
+    Return `output` colorized with Pygments, if available.
+
+    """
+    if not pygments:
+        return output
+    # Available styles
+    # ['monokai', 'manni', 'rrt', 'perldoc', 'borland', 'colorful', 'default',
+    # 'murphy', 'vs', 'trac', 'tango', 'fruity', 'autumn', 'bw', 'emacs',
+    # 'vim', 'pastie', 'friendly', 'native']
+    return pygments.highlight(output,
+            pygments.lexers.PythonLexer(),
+            pygments.formatters.Terminal256Formatter(style='monokai'))
+
+
+def _parse_dir(directory, relpath):
+    """
+    Return a list of :class:`_PyconfigCall` from recursively parsing
+    `directory`.
+
+    :param directory: Directory to walk looking for python files
+    :param relpath: Path to make filenames relative to
+    :type directory: str
+    :type relpath: str
+
+    """
+    relpath = os.path.dirname(relpath)
+    pyconfig_calls = []
+    for root, dirs, files in os.walk(directory):
+        for filename in files:
+            if not filename.endswith('.py'):
+                continue
+            filename = os.path.join(root, filename)
+            pyconfig_calls.extend(_parse_file(filename, relpath))
+
+    return pyconfig_calls
+
+
+def _parse_file(filename, relpath=None):
+    """
+    Return a list of :class:`_PyconfigCall` from parsing `filename`.
+
+    :param filename: A file to parse
+    :param relpath: Relative directory to strip (optional)
+    :type filename: str
+    :type relpath: str
+
+    """
     with open(filename, 'r') as source:
         source = source.read()
 
     pyconfig_calls = []
-    nodes = ast.parse(source, filename=filename)
+    try:
+        nodes = ast.parse(source, filename=filename)
+    except SyntaxError:
+        # XXX(Jake): We might want to handle this differently
+        return []
+
+    # Split the source into lines so we can reference it easily
+    source = source.split('\n')
+
+    # Make the filename relative to the given path, if needed
+    if relpath:
+        filename = os.path.relpath(filename, relpath)
+
     for call in ast.walk(nodes):
         if not isinstance(call, _ast.Call):
             # Skip any node that isn't a Call
@@ -179,22 +484,43 @@ def _parse_file(filename):
 
         # Now we parse the call arguments as best we can
         args = []
-        for arg in call.args:
-            # Grab the easy to parse values
+        if call.args:
+            arg = call.args[0]
             if isinstance(arg, _ast.Str):
                 args.append(arg.s)
-            elif isinstance(arg, _ast.Num):
-                args.append(arg.n)
-            elif isinstance(arg, _ast.Name):
-                args.append(name_map.get(arg.id, arg.id))
             else:
-                # Everything else we don't bother with
-                args.append(Unparseable())
+                args.append(_map_arg(arg))
 
-        # XXX(shakefu): We may want functionality from this that gives source
-        # hinting especially for unparsable statements, but for now we return a
-        # list of tuples
-        pyconfig_calls.append((func.attr, args[0], args[1:]))
+        for arg in call.args[1:]:
+            args.append(_map_arg(arg))
+
+        line = (filename, source[call.lineno-1], call.lineno, call.col_offset)
+        call = _PyconfigCall(func.attr, args[0], args[1:], line)
+        pyconfig_calls.append(call)
 
     return pyconfig_calls
+
+
+def _map_arg(arg):
+    """
+    Return `arg` appropriately parsed or mapped to a usable value.
+
+    """
+    # Grab the easy to parse values
+    if isinstance(arg, _ast.Str):
+        return repr(arg.s)
+    elif isinstance(arg, _ast.Num):
+        return arg.n
+    elif isinstance(arg, _ast.Name):
+        name = arg.id
+        if name == 'True':
+            return True
+        elif name == 'False':
+            return False
+        elif name == 'None':
+            return None
+        return name
+    else:
+        # Everything else we don't bother with
+        return Unparseable()
 
