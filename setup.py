@@ -1,6 +1,6 @@
 import multiprocessing, logging # Fix atexit bug
 import os
-from setuptools import setup
+from setuptools import setup, find_packages
 
 import pyconfig
 
@@ -21,7 +21,7 @@ setup(
         author="Jacob Alheid",
         author_email="jake@team.about.me",
         url="http://github.com/aol/pyconfig",
-        py_modules=['pyconfig'],
+        packages=find_packages(exclude=['test']),
         test_suite='nose.collector',
         tests_require=[
             'nose',
