@@ -34,14 +34,23 @@ def main():
 
         if os.path.isfile(module):
             filename = module
-
-        # TODO(shakefu): Handle directory walking to find all subfiles
+        elif os.path.isdir(module):
+            # TODO(shakefu): Handle directory walking to find all subfiles
+            print "Found package:", module
+        else:
+            # XXX(shakefu): This is an error of some sort, maybe symlinks?
+            # Probably need some thorough testing
+            _error("Could not determine file type: %r", args.module)
 
     if filename:
         if not os.path.isfile(filename):
             _error("Not a file: %r", filename)
 
         calls = _parse_file(filename)
+        if not calls:
+            # XXX(shakefu): Probably want to change this to not be an error and
+            # just be a normal fail (e.g. command runs, no output).
+            _error("No pyconfig calls.")
 
         # XXX(shakefu): This is temporary output for testing
         for method, key, default in sorted(calls, key=lambda c: c[1]):
@@ -77,19 +86,9 @@ def _get_module_filename(module):
     :type module: str
 
     """
-    try:
-        # Try runpy first, if it's a module, because __import__ returns the
-        # topmost package and we'd have to dick around with getattr
-        module = runpy.run_module(module)
-        return module.get('__file__', Unparseable())
-    except ImportError:
-        # This means it's probably not a module, but a package, or doesn't
-        # exist
-        pass
-
     # Split up the module and its containing package, if it has one
     module = module.split('.')
-    package = module[:-1] or None
+    package = '.'.join(module[:-1])
     module = module[-1]
 
     try:
@@ -103,19 +102,16 @@ def _get_module_filename(module):
             # Get the module from that package
             module = getattr(package, module, None)
 
-            if not module:
-                # If we can't get the module, then we get out (impossible?)
-                return
-
         filename = getattr(module, '__file__', None)
         if not filename:
             # No filename? Nothing to do here
             return Unparseable()
 
+        # If we get a .pyc, we want the .py so we can parse the source
+        if filename.endswith('.pyc'):
+            filename = filename[:-1]
         # If we have a package, we want the directory not the init file
-        if filename.endswith('__init__.pyc'):
-            filename = filename[:-12]
-        elif filename.endswith('__init__.py'):
+        if filename.endswith('__init__.py'):
             filename = filename[:-11]
 
         # Yey, we found it
