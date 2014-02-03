@@ -5,7 +5,7 @@ Tests for pyconfig
 import mock
 
 import pyconfig
-from .util import *
+from nose.tools import eq_
 
 
 def test_namespace_attr():
@@ -146,4 +146,5 @@ def test_get_default_with_various_values():
     eq_(pyconfig.get('default_false', False), False)
     eq_(pyconfig.get('default_unicode', u'Test'), u'Test')
     eq_(pyconfig.get('default_expr', 60*24), 60*24)
+    eq_(pyconfig.get('ns.test_namespace', 'pyconfig'), 'pyconfig')
 

@@ -3,14 +3,16 @@ import re
 import ast
 import sys
 import _ast
-import runpy
 import argparse
+
+import pyconfig
 
 # Pygments is optional but allows for colorization of output
 try:
     import pygments
     import pygments.lexers
     import pygments.formatters
+    pygments  # Make Pyflakes stop bitching about this being unused
 except ImportError:
     pygments = None
 
@@ -24,29 +26,32 @@ def main():
             "pyconfigs")
     target_group = parser.add_mutually_exclusive_group()
     target_group.add_argument('-f', '--filename',
-            help="Parse an individual file or directory",
+            help="parse an individual file or directory",
             metavar='F')
     target_group.add_argument('-m', '--module',
-            help="Parse a package or module, recursively looking inside it",
+            help="parse a package or module, recursively looking inside it",
             metavar='M')
     parser.add_argument('-v', '--view-call',
-            help="Show the actual pyconfig call made (default: show namespace)",
+            help="show the actual pyconfig call made (default: show namespace)",
+            action='store_true')
+    parser.add_argument('-l', '--load-configs',
+            help="query the currently set value for each key found",
             action='store_true')
     key_group = parser.add_mutually_exclusive_group()
     key_group.add_argument('-a', '--all',
-            help="Show all pyconfig key references",
+            help="show keys which don't have defaults set",
             action='store_true')
     key_group.add_argument('-k', '--only-keys',
-            help="Show a list of discovered keys without values",
+            help="show a list of discovered keys without values",
             action='store_true')
     parser.add_argument('-n', '--natural-sort',
-            help="Sort by filename and line (default: alphabetical by key)",
+            help="sort by filename and line (default: alphabetical by key)",
             action='store_true')
     parser.add_argument('-s', '--source',
-            help="Show source annotations (implies --natural-sort)",
+            help="show source annotations (implies --natural-sort)",
             action='store_true')
     parser.add_argument('-c', '--color',
-            help="Toggle output colors (default: %s)" % bool(pygments),
+            help="toggle output colors (default: %s)" % bool(pygments),
             action='store_const', default=bool(pygments),
             const=(not bool(pygments)))
     args = parser.parse_args()
@@ -56,7 +61,6 @@ def main():
                 "    pip install pygments")
 
     if args.module:
-        # TODO: Break out module handling into its own function
         _handle_module(args)
 
     if args.filename:
@@ -116,6 +120,20 @@ class _PyconfigCall(object):
 
         return "%s = %s" % (self.get_key(), self._default() or NotSet())
 
+    def as_live(self):
+        """
+        Return this call as if it were being assigned in a pyconfig namespace,
+        but load the actual value currently available in pyconfig.
+
+        """
+        key = self.get_key()
+        default = pyconfig.get(key)
+        if default:
+            default = repr(default)
+        else:
+            default = self._default() or NotSet()
+        return "%s = %s" % (key, default)
+
     def as_call(self):
         """
         Return this call as it is called in its source.
@@ -130,11 +148,25 @@ class _PyconfigCall(object):
         Return this call's source annotation.
 
         """
-        # XXX(Jake): We may want to change this to be relative to the filename
-        # or what have you... will have to see how it works with modules
-        # filename = os.path.relpath(self.filename, os.getcwd())
-        # return "# %s (%s): %s" % (filename, self.lineno, self.source.strip())
+        if not self.source:
+            return "# Loaded config"
         return "# %s, line %s" % (self.filename, self.lineno)
+
+    def get_key(self):
+        """
+        Return the call key, even if it has to be parsed from the source.
+
+        """
+        if not isinstance(self.key, Unparseable):
+            return self.key
+
+        line = self.source[self.col_offset:]
+        regex = re.compile('''pyconfig\.[eginst]+\(([^,]+).*?\)''')
+        match = regex.match(line)
+        if not match:
+            return Unparseable()
+
+        return "<%s>" % match.group(1)
 
     def _source_call_only(self):
         """
@@ -162,23 +194,6 @@ class _PyconfigCall(object):
             return ''
 
         return match.group(1)
-
-    def get_key(self):
-        """
-        Return the call key, even if it has to be parsed from the source.
-
-        """
-        if not isinstance(self.key, Unparseable):
-            return self.key
-
-        line = self.source[self.col_offset:]
-        regex = re.compile('''pyconfig\.[eginst]+\(([^,]+).*?\)''')
-        match = regex.match(line)
-        if not match:
-            return Unparsable()
-
-        return "<%s>" % match.group(1)
-
 
     def _default(self):
         """
@@ -314,6 +329,20 @@ def _parse_and_output(filename, args):
         # just be a normal fail (e.g. command runs, no output).
         _error("No pyconfig calls.")
 
+    if args.load_configs:
+        # We want to iterate over the configs and add any keys which haven't
+        # already been found
+        keys = set()
+        for call in calls:
+            keys.add(call.key)
+
+        # Iterate the loaded keys and make _PyconfigCall instances
+        conf = pyconfig.Config()
+        for key, value in conf.settings.iteritems():
+            if key in keys:
+                continue
+            calls.append(_PyconfigCall('set', key, value, [None]*4))
+
     _output(calls, args)
 
 
@@ -389,6 +418,8 @@ def _format_call(call, args):
 
     if args.view_call:
         out += call.as_call()
+    elif args.load_configs:
+        out += call.as_live()
     else:
         out += call.as_namespace()
 
