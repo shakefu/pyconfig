@@ -8,7 +8,7 @@ import logging
 import pkg_resources
 
 
-__version__ = '2.0.0-dev'
+__version__ = '2.0.0'
 
 
 log = logging.getLogger(__name__)
