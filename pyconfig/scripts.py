@@ -1,3 +1,4 @@
+from __future__ import print_function, unicode_literals
 import os
 import re
 import ast
@@ -245,7 +246,7 @@ def _error(msg, *args):
     :type msg: str
 
     """
-    print >>sys.stderr, msg % args
+    print(msg % args, file=sys.stderr)
     sys.exit(1)
 
 
@@ -338,7 +339,7 @@ def _parse_and_output(filename, args):
 
         # Iterate the loaded keys and make _PyconfigCall instances
         conf = pyconfig.Config()
-        for key, value in conf.settings.iteritems():
+        for key, value in conf.settings.items():
             if key in keys:
                 continue
             calls.append(_PyconfigCall('set', key, value, [None]*4))
@@ -376,7 +377,7 @@ def _output(calls, args):
         out = '\n'.join(out)
         if args.color:
             out = _colorize(out)
-        print out,
+        print(out, end=' ')
 
         # We're done here
         return
@@ -396,7 +397,7 @@ def _output(calls, args):
     out = '\n'.join(out)
     if args.color:
         out = _colorize(out)
-    print out,
+    print(out, end=' ')
 
 
 def _format_call(call, args):

@@ -3,6 +3,7 @@ Pyconfig
 ========
 
 """
+from __future__ import print_function, unicode_literals
 import runpy
 import logging
 import pkg_resources
@@ -108,7 +109,7 @@ class Config(object):
             :param str base_name: Base namespace for setting keys.
 
         """
-        for name in conf_dict.keys():
+        for name in conf_dict:
             # Skip private names
             if name.startswith('_'):
                 continue
