@@ -29,7 +29,7 @@ all the configuration keys defined.
      -s, --source        show source annotations (implies --natural-sort)
      -c, --color         toggle output colors (default: True)
 
-.. rubric:: Example output
+**Example output**
 
 .. code-block:: python
 
@@ -68,7 +68,9 @@ Code Examples
 -------------
 
 The most basic usage allows you to get, retrieve and modify values. Pyconfig's
-singleton provides convenient accessor methods for these actions::
+singleton provides convenient accessor methods for these actions:
+
+.. code-block:: python
 
     >>> import pyconfig
     >>> pyconfig.get('my.setting', 'default')
@@ -81,7 +83,9 @@ singleton provides convenient accessor methods for these actions::
     'default'
 
 Pyconfig also provides shortcuts for giving classes property descriptors which
-map to the current setting stored in the singleton::
+map to the current setting stored in the singleton:
+
+.. code-block:: python
 
     >>> import pyconfig
     >>> class MyClass(object):
@@ -103,7 +107,9 @@ map to the current setting stored in the singleton::
 Pyconfig allows you to override settings via a python configuration file, that
 defines its configuration keys as a module namespace. By default, Pyconfig will
 look on your ``PYTHONPATH`` for a module named ``localconfig``, and if it exists, it
-will use this module namespace to update all configuration settings::
+will use this module namespace to update all configuration settings:
+
+.. code-block:: python
 
     # __file__ = "$PYTHONPATH/localconfig.py"
     from pyconfig import Namespace
@@ -117,7 +123,9 @@ will use this module namespace to update all configuration settings::
     my.nested.setting = 'also_from_localconfig'
 
 With a ``localconfig`` on the ``PYTHONPATH``, it will be loaded before any settings
-are read::
+are read:
+
+.. code-block:: python
 
     >>> import pyconfig
     >>> pyconfig.get('my.setting')
@@ -126,7 +134,9 @@ are read::
     'also_from_localconfig'
 
 Pyconfig also allows you to create distutils plugins that are automatically
-loaded. An example ``setup.py``::
+loaded. An example ``setup.py``:
+
+.. code-block:: python
 
     # __file__ = setup.py
     from setuptools import setup
@@ -146,7 +156,9 @@ loaded. An example ``setup.py``::
                 },
             )
 
-An example distutils plugin configuration file::
+An example distutils plugin configuration file:
+
+.. code-block:: python
 
     # __file__ = myconfig.py
     from pyconfig import Namespace
@@ -159,14 +171,18 @@ An example distutils plugin configuration file::
     nested = Namespace()
     nested.setting = 'also_from_plugin'
 
-Another example configuration file, without a base namespace::
+Another example configuration file, without a base namespace:
+
+.. code-block:: python
 
     # __file__ = anyconfig.py
     from pyconfig import Namespace
     other = Namespace()
     other.setting = 'anyconfig_value'
 
-Showing the plugin-specified settings::
+Showing the plugin-specified settings:
+
+.. code-block:: python
 
     >>> import pyconfig
     >>> pyconfig.get('my.setting', 'default')
@@ -178,7 +194,9 @@ Showing the plugin-specified settings::
     >>> pyconfig.get('other.setting', 'default')
     'anyconfig_value'
 
-More fancy stuff::
+More fancy stuff:
+
+.. code-block:: python
 
     >>> # Reloading changes re-calls functions...
     >>> pyconfig.reload()
@@ -191,7 +209,9 @@ More fancy stuff::
     >>> signal.signal(signal.SIGUSR1, pyconfig.reload)
 
 Pyconfig provides a ``@reload_hook`` decorator that allows you to register
-functions or methods to be called when the configuration is reloaded::
+functions or methods to be called when the configuration is reloaded:
+
+.. code-block:: python
 
       >>> import pyconfig
       >>> @pyconfig.reload_hook
