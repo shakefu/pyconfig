@@ -185,7 +185,7 @@ class Config(object):
             # This is a bad work-around to make this work transparently...
             # shouldn't really access core stuff like this, but Fuck It[tm]
             mod_name = 'localconfig'
-            if sys.version < (2, 7):
+            if sys.version_info < (2, 7):
                 loader, code, fname = runpy._get_module_details(mod_name)
             else:
                 _, loader, code, fname = runpy._get_module_details(mod_name)
