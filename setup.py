@@ -17,7 +17,7 @@ setup(
         name='pyconfig',
         version=pyconfig.__version__,
         description="Python-based singleton configuration",
-        long_description=README(),
+        # long_description=README(),
         author="Jacob Alheid",
         author_email="jake@team.about.me",
         url="http://github.com/aol/pyconfig",

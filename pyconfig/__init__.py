@@ -9,7 +9,7 @@ import logging
 import pkg_resources
 
 
-__version__ = '2.1.1'
+__version__ = '2.1.2'
 
 
 log = logging.getLogger(__name__)
