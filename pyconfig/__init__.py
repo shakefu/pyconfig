@@ -177,7 +177,7 @@ class Config(object):
             mod_dict = runpy.run_module('localconfig')
         except ImportError:
             pass
-        except ValueError, err:
+        except ValueError as err:
             if getattr(err, 'message') != '__package__ set to non-string':
                 raise
 
