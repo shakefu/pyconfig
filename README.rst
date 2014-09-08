@@ -238,6 +238,11 @@ Changes
 
 This section contains descriptions of changes in each new version.
 
+2.1.4
+^^^^^
+
+* Broke Python 2.6 in 2.1.1, fixed again.
+
 2.1.2-2.1.3
 ^^^^^^^^^^^
 
