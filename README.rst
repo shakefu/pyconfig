@@ -215,6 +215,16 @@ Changes
 
 This section contains descriptions of changes in each new version.
 
+2.1.2
+^^^^^
+
+* Package clean up.
+
+2.1.1
+^^^^^
+
+* Fix bug that would break on Python 2.6 and 2.7 when using a localconfig.py.
+
 2.1.0
 ^^^^^
 
@@ -251,5 +261,5 @@ Contributors
 ------------
 
 * `shakefu <http://github.com/shakefu>` - Creator and maintainer
-* `hfalcic <https://github.com/hfalcic>`
+* `hfalcic <https://github.com/hfalcic>` - Python 3 compatability
 
