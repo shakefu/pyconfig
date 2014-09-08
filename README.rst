@@ -229,7 +229,7 @@ This section contains descriptions of changes in each new version.
 ^^^^^
 
 * Pyconfig now works on Python 3, thanks to `hfalcic
-  <https://github.com/hfalcic>`!
+  <https://github.com/hfalcic>`_!
 
 2.0.0
 ^^^^^
