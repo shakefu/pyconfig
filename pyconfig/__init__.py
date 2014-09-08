@@ -177,6 +177,16 @@ class Config(object):
             mod_dict = runpy.run_module('localconfig')
         except ImportError:
             pass
+        except ValueError, err:
+            if getattr(err, 'message') != '__package__ set to non-string':
+                raise
+
+            # This is a bad work-around to make this work transparently...
+            # shouldn't really access core stuff like this, but Fuck It[tm]
+            mod_name = 'localconfig'
+            mod_name, loader, code, fname = runpy._get_module_details(mod_name)
+            mod_dict = runpy._run_code(code, {}, {}, mod_name, fname, loader,
+                    pkg_name=None)
         else:
             log.info("Loading module 'localconfig'")
             self._update(mod_dict)
