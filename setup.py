@@ -1,23 +1,13 @@
 import multiprocessing, logging # Fix atexit bug
-import os
 from setuptools import setup, find_packages
 
 import pyconfig
-
-
-def README():
-    try:
-        return open(os.path.join(os.path.dirname(__file__),
-            'README.rst')).read()
-    except:
-        pass
 
 
 setup(
         name='pyconfig',
         version=pyconfig.__version__,
         description="Python-based singleton configuration",
-        # long_description=README(),
         author="Jacob Alheid",
         author_email="jake@team.about.me",
         url="http://github.com/aol/pyconfig",
