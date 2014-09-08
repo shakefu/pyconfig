@@ -260,6 +260,6 @@ This section contains descriptions of changes in each new version.
 Contributors
 ------------
 
-* `shakefu <http://github.com/shakefu>` - Creator and maintainer
-* `hfalcic <https://github.com/hfalcic>` - Python 3 compatability
+* `shakefu <http://github.com/shakefu>`_ - Creator and maintainer
+* `hfalcic <https://github.com/hfalcic>`_ - Python 3 compatability
 
