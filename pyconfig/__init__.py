@@ -4,6 +4,7 @@ Pyconfig
 
 """
 from __future__ import print_function, unicode_literals
+import sys
 import runpy
 import logging
 import pkg_resources
@@ -184,7 +185,10 @@ class Config(object):
             # This is a bad work-around to make this work transparently...
             # shouldn't really access core stuff like this, but Fuck It[tm]
             mod_name = 'localconfig'
-            mod_name, loader, code, fname = runpy._get_module_details(mod_name)
+            if sys.version < (2, 7):
+                loader, code, fname = runpy._get_module_details(mod_name)
+            else:
+                _, loader, code, fname = runpy._get_module_details(mod_name)
             mod_dict = runpy._run_code(code, {}, {}, mod_name, fname, loader,
                     pkg_name=None)
         else:
