@@ -1,1 +1,1 @@
-ignore localconfig.py
+exclude localconfig.py
