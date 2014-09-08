@@ -221,21 +221,19 @@ functions or methods to be called when the configuration is reloaded:
       >>> pyconfig.reload()
       Do something here.
 
-:warning: It should not be used to register large numbers of functions (e.g.
-          registering a bound method in a class's ``__init__`` method), since
-          there is no way to un-register a hook and it will cause a memory
-          leak, since a bound method maintains a strong reference to the
-          bound instance.
+**Warning**: It should not be used to register large numbers of functions (e.g.
+registering a bound method in a class's ``__init__`` method), since there is no
+way to un-register a hook and it will cause a memory leak, since a bound method
+maintains a strong reference to the bound instance.
 
-:note: Because the reload hooks are called without arguments, it will not work
-       with unbound methods or classmethods.
+**Note**: Because the reload hooks are called without arguments, it will not
+work with unbound methods or classmethods.
+
 
 Changes
 -------
 
 This section contains descriptions of changes in each new version.
-
-
 
 2.1.2-2.1.3
 ^^^^^^^^^^^
