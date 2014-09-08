@@ -4,13 +4,16 @@ pyconfig - Python-based singleton configuration
 This module provides python based configuration that is stored in a singleton
 object to ensure consistency across your project.
 
+.. contents::
+   :local:
+
 Command Line
 ------------
 
 Pyconfig has a command line utility that lets you inspect your project to find
 all the configuration keys defined.
 
-.. code-block::
+::
 
    $ pyconfig -h
    usage: pyconfig [-h] [-f F | -m M] [-v] [-l] [-a | -k] [-n] [-s] [-c]
@@ -31,7 +34,7 @@ all the configuration keys defined.
 
 **Example output**
 
-.. code-block::
+.. code-block:: python
 
    $ pyconfig --file .
    humbledb.allow_explicit_request = True
@@ -238,7 +241,7 @@ This section contains descriptions of changes in each new version.
 2.1.2-2.1.3
 ^^^^^^^^^^^
 
-* Package clean up.
+* Package clean up and fixing README to work on PyPI again.
 
 2.1.1
 ^^^^^
