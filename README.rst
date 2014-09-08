@@ -90,7 +90,7 @@ map to the current setting stored in the singleton:
     >>> import pyconfig
     >>> class MyClass(object):
     ...     my_setting = pyconfig.setting('my.setting', 'default')
-    ...     
+    ...
     >>> MyClass.my_setting
     'default'
     >>> MyClass().my_setting
@@ -114,7 +114,7 @@ will use this module namespace to update all configuration settings:
     # __file__ = "$PYTHONPATH/localconfig.py"
     from pyconfig import Namespace
 
-    # Namespace objects allow you to use attribute assignment to create setting 
+    # Namespace objects allow you to use attribute assignment to create setting
     # key names
     my = Namespace()
     my.setting = 'from_localconfig'
@@ -217,7 +217,7 @@ functions or methods to be called when the configuration is reloaded:
       >>> @pyconfig.reload_hook
       ... def reload():
       ...     print "Do something here."
-      ...     
+      ...
       >>> pyconfig.reload()
       Do something here.
 
@@ -235,8 +235,10 @@ Changes
 
 This section contains descriptions of changes in each new version.
 
-2.1.2
-^^^^^
+
+
+2.1.2-2.1.3
+^^^^^^^^^^^
 
 * Package clean up.
 
@@ -248,8 +250,8 @@ This section contains descriptions of changes in each new version.
 2.1.0
 ^^^^^
 
-* Pyconfig now works on Python 3, thanks to `hfalcic
-  <https://github.com/hfalcic>`_!
+* Pyconfig now works on Python 3, thanks to
+  `hfalcic <https://github.com/hfalcic>`_!
 
 2.0.0
 ^^^^^
