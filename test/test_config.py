@@ -149,3 +149,7 @@ def test_get_default_with_various_values():
     eq_(pyconfig.get('default_expr', 60*24), 60*24)
     eq_(pyconfig.get('ns.test_namespace', 'pyconfig'), 'pyconfig')
 
+
+def test_localconfig_py_actually_works():
+    eq_(pyconfig.get('conf.local', False), True)
+

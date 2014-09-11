@@ -238,6 +238,12 @@ Changes
 
 This section contains descriptions of changes in each new version.
 
+2.1.5
+^^^^^
+
+* Fix regression where ``localconfig.py`` wasn't being loaded on Python 2.7 due
+  to a logic flow error. Whoops!
+
 2.1.4
 ^^^^^
 

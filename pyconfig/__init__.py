@@ -174,6 +174,7 @@ class Config(object):
             self._update(mod_dict, base_name)
 
         # Allow localconfig overrides
+        mod_dict = None
         try:
             mod_dict = runpy.run_module('localconfig')
         except ImportError:
@@ -191,7 +192,8 @@ class Config(object):
                 _, loader, code, fname = runpy._get_module_details(mod_name)
             mod_dict = runpy._run_code(code, {}, {}, mod_name, fname, loader,
                     pkg_name=None)
-        else:
+
+        if mod_dict:
             log.info("Loading module 'localconfig'")
             self._update(mod_dict)
 
