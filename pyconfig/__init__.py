@@ -229,7 +229,7 @@ class Config(object):
         """
         if name not in self.settings:
             if not allow_default:
-                raise LookupError('No setting "{}"'.format(name))
+                raise LookupError('No setting "{name}"'.format(name=name))
             self.settings[name] = default
         return self.settings[name]
 
