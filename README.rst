@@ -273,6 +273,12 @@ Changes
 
 This section contains descriptions of changes in each new version.
 
+2.2.0
+^^^^^
+
+* Add ``allow_default`` keyword option to ``get()`` and ``setting()``. Thanks
+  to `yarbelk <https://github.com/yarbelk>`_!
+
 2.1.5
 ^^^^^
 
@@ -331,4 +337,5 @@ Contributors
 
 * `shakefu <http://github.com/shakefu>`_ - Creator and maintainer
 * `hfalcic <https://github.com/hfalcic>`_ - Python 3 compatability
+* `yarbelk <https://github.com/yarbelk>`_ - ``allow_default`` option
 
