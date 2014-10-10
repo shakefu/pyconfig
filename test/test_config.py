@@ -69,12 +69,12 @@ def test_allow_default():
 
 @raises(LookupError)
 def test_get_no_default():
-    pyconfig.get('get_no_default', allow_default=False)
+    pyconfig.get('get_no_default1', allow_default=False)
 
 
 @raises(LookupError)
 def test_config_get_no_default():
-    pyconfig.Config().get('get_no_default', None, allow_default=False)
+    pyconfig.Config().get('get_no_default2', None, allow_default=False)
 
 
 def test_set_get_change():

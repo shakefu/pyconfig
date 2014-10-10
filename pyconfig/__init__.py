@@ -227,7 +227,7 @@ class Config(object):
             :raises: :exc:`LookupError` if allow_default is false and the setting is
                      not set.
         """
-        if name not in self.settings and allow_default:
+        if name not in self.settings:
             if not allow_default:
                 raise LookupError('No setting "{}"'.format(name))
             self.settings[name] = default

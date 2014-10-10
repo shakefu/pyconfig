@@ -85,6 +85,20 @@ singleton provides convenient accessor methods for these actions:
     >>> pyconfig.get('my.setting', 'default')
     'default'
 
+You can also opt-out of default values:
+
+.. code-block:: python
+
+    >>> import pyconfig
+    >>> pyconfig.get('my.setting', allow_default=False)
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+      File "pyconfig/__init__.py", line 275, in get
+        return Config().get(name, default, allow_default=allow_default)
+      File "pyconfig/__init__.py", line 234, in get
+        return self.settings[name]
+     LookupError: No setting "my.setting"
+
 Pyconfig also provides shortcuts for giving classes property descriptors which
 map to the current setting stored in the singleton:
 
@@ -106,6 +120,27 @@ map to the current setting stored in the singleton:
     >>> pyconfig.reload(clear=True)
     >>> MyClass.my_setting
     'default'
+
+The `Setting` class also supports preventing default values.  When set this way,
+all reads on the attribute will prevent the use of defaults:
+
+.. code-block:: python
+
+    >>> import pyconfig
+    >>> class MyClass(object):
+    ...     my_setting = pyconfig.setting('my.setting', allow_default=False)
+    ...
+    >>> MyClass.my_setting
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+      File "pyconfig/__init__.py", line 84, in __get__
+        allow_default=self.allow_default)
+      File "pyconfig/__init__.py", line 232, in get
+        raise LookupError('No setting "{}"'.format(name))
+    LookupError: No setting "my.setting"
+    >>> pyconfig.set('my.setting', 'new_value')
+    >>> MyClass.my_setting
+    'value'
 
 Pyconfig allows you to override settings via a python configuration file, that
 defines its configuration keys as a module namespace. By default, Pyconfig will
