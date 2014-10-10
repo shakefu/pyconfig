@@ -6,7 +6,7 @@ from __future__ import print_function, unicode_literals
 import mock
 
 import pyconfig
-from nose.tools import eq_
+from nose.tools import eq_, raises
 
 
 def test_namespace_attr():
@@ -58,6 +58,20 @@ def test_namespace_implicit_nesting():
 def test_set_and_get():
     pyconfig.set('set_and_get', 'tested')
     eq_(pyconfig.get('set_and_get'), 'tested')
+
+def test_allow_default():
+    eq_(pyconfig.get('test_allow_default1'), None)
+    eq_(pyconfig.get('test_allow_default2', default=None), None)
+    eq_(pyconfig.get('test_allow_default3', 'default_value', allow_default=True),
+        'default_value')
+
+@raises(KeyError)
+def test_get_no_default():
+    pyconfig.get('get_no_default', allow_default=False)
+
+@raises(KeyError)
+def test_config_get_no_default():
+    pyconfig.Config().get('get_no_default', None, allow_default=False)
 
 
 def test_set_get_change():
