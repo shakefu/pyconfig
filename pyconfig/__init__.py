@@ -65,13 +65,23 @@ class Setting(object):
     """ Setting descriptor. Allows class property style access of setting
         values that are always up to date.
 
+        If it is set with `allow_default` as `False`, calling the
+        attribute when its value is not set will raise a :exc:`LookupError`
+
+        :param str name: Setting key name
+        :param default: default value of setting.  Defaults to None.
+        :param bool allow_default: If true, use the parameter default as
+                        default if the key is not set, else raise
+                        :exc:`LookupError`
     """
-    def __init__(self, name, default=None):
+    def __init__(self, name, default=None, allow_default=True):
         self.name = name
         self.default = default
+        self.allow_default = allow_default
 
     def __get__(self, instance, owner):
-        return Config().get(self.name, self.default)
+        return Config().get(self.name, self.default,
+                            allow_default=self.allow_default)
 
 
 class Config(object):
@@ -213,13 +223,13 @@ class Config(object):
                             set.
             :param bool allow_default: If true, use the parameter default as
                             default if the key is not set, else raise
-                            :exc:`KeyError`
-            :raises: :exc:`KeyError` if allow_default is false and the setting is
+                            :exc:`LookupError`
+            :raises: :exc:`LookupError` if allow_default is false and the setting is
                      not set.
         """
         if name not in self.settings and allow_default:
             if not allow_default:
-                raise KeyError('No setting "{}"'.format(name))
+                raise LookupError('No setting "{}"'.format(name))
             self.settings[name] = default
         return self.settings[name]
 
@@ -242,9 +252,12 @@ def reload(clear=False):
     Config().reload(clear)
 
 
-def setting(name, default=None):
-    """ Shortcut method for getting a setting descriptor. """
-    return Setting(name, default)
+def setting(name, default=None, allow_default=True):
+    """ Shortcut method for getting a setting descriptor.
+
+        See :class:`pyconfig.Setting` for details.
+    """
+    return Setting(name, default, allow_default)
 
 
 def get(name, default=None, allow_default=True):
