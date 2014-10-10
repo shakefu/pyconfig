@@ -6,7 +6,7 @@ from __future__ import print_function, unicode_literals
 import mock
 
 import pyconfig
-from nose.tools import eq_
+from nose.tools import eq_, raises, assert_raises
 
 
 def test_namespace_attr():
@@ -60,6 +60,23 @@ def test_set_and_get():
     eq_(pyconfig.get('set_and_get'), 'tested')
 
 
+def test_allow_default():
+    eq_(pyconfig.get('test_allow_default1'), None)
+    eq_(pyconfig.get('test_allow_default2', default=None), None)
+    eq_(pyconfig.get('test_allow_default3', 'default_value', allow_default=True),
+        'default_value')
+
+
+@raises(LookupError)
+def test_get_no_default():
+    pyconfig.get('get_no_default1', allow_default=False)
+
+
+@raises(LookupError)
+def test_config_get_no_default():
+    pyconfig.Config().get('get_no_default2', None, allow_default=False)
+
+
 def test_set_get_change():
     pyconfig.set('set_get_change', 'testing')
     eq_(pyconfig.get('set_get_change'), 'testing')
@@ -82,6 +99,17 @@ def test_setting_change():
     pyconfig.set('test_setting_change', 'value2')
     eq_(Test.setting, 'value2')
     eq_(Test().setting, 'value2')
+
+
+def test_setting_no_default():
+    class Test(object):
+        setting_no_default = pyconfig.Setting('test_setting_no_default',
+                                              allow_default=False)
+
+    # lambda because assert_raises needs a callable
+    assert_raises(LookupError, lambda: Test.setting_no_default)
+    pyconfig.set('test_setting_no_default', 'new_value')
+    eq_(Test.setting_no_default, 'new_value')
 
 
 def test_config_update():
@@ -135,8 +163,12 @@ def test_reload_hook():
 def test_setting_shortcut():
     class Test(object):
         setting = pyconfig.setting('test_setting_shortcut', 'tested')
+        setting_no_default = pyconfig.setting('setting_shortcut_no_default',
+                                              allow_default=False)
     eq_(Test.setting, 'tested')
     eq_(Test().setting, 'tested')
+    assert_raises(LookupError, lambda: Test.setting_no_default, )
+
 
 
 def test_get_default_with_various_values():
