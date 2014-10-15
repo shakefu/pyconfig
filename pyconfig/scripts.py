@@ -486,8 +486,22 @@ def _parse_file(filename, relpath=None):
         # XXX(Jake): We might want to handle this differently
         return []
 
-    # Split the source into lines so we can reference it easily
-    source = source.split('\n')
+    # Look for UTF-8 encoding
+    first_lines = source[0:200]
+    match = re.match('^#.*coding[:=].?([a-zA-Z0-9-_]+).*', first_lines)
+    if match:
+        try:
+            coding = match.group(1)
+            source = source.decode(coding)
+        except:
+            print("# Error decoding file, may not parse correctly:", filename)
+
+    try:
+        # Split the source into lines so we can reference it easily
+        source = source.split('\n')
+    except:
+        print("# Error parsing file, ignoring:", filename);
+        return []
 
     # Make the filename relative to the given path, if needed
     if relpath:
