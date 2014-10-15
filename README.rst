@@ -273,6 +273,12 @@ Changes
 
 This section contains descriptions of changes in each new version.
 
+2.2.1
+^^^^^
+
+* The command line tool will now attempt to handle source files which specify a
+  non-ascii encoding gracefully.
+
 2.2.0
 ^^^^^
 
