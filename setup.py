@@ -9,8 +9,8 @@ setup(
         version=pyconfig.__version__,
         description="Python-based singleton configuration",
         author="Jacob Alheid",
-        author_email="jake@team.about.me",
-        url="http://github.com/aol/pyconfig",
+        author_email="shakefu@gmail.com",
+        url="http://github.com/shakefu/pyconfig",
         packages=find_packages(exclude=['test']),
         test_suite='nose.collector',
         tests_require=[
