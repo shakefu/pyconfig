@@ -10,7 +10,7 @@ import logging
 import pkg_resources
 
 
-__version__ = '2.2.1'
+__version__ = '3.0.0-dev'
 
 
 log = logging.getLogger(__name__)

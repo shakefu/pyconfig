@@ -13,11 +13,17 @@ setup(
         url="http://github.com/shakefu/pyconfig",
         packages=find_packages(exclude=['test']),
         test_suite='nose.collector',
+        install_requires=[
+            'pytool',
+            ],
         tests_require=[
             'nose',
             'coverage',
             'mock',
             ],
+        extras_require={
+            'etcd': ['python-etcd']
+            },
         entry_points={
             'console_scripts':[
                 'pyconfig = pyconfig.scripts:main',
