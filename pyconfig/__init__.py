@@ -19,53 +19,6 @@ __version__ = '3.0.0-dev'
 log = logging.getLogger(__name__)
 
 
-'''
-class Namespace(object):
-    """
-    Namespace object used for creating settings module. This can be used to
-    create nested namespace objects.
-
-    Example::
-
-        from pyconfig import Namespace
-
-        pyconfig = Namespace()
-        pyconfig.example.setting = True
-
-    """
-    def __init__(self):
-        # Using a regular assignment here breaks due to __setattr__ overriding
-        object.__setattr__(self, '_config', {})
-
-    def __setattr__(self, name, value):
-        # Allow nested property access
-        # XXX if isinstance(value, Namespace):
-        object.__setattr__(self, name, value)
-        self._config[name] = value
-
-    def __getattr__(self, name):
-        # Allow implicit nested namespaces by attribute access
-        new_space = Namespace()
-        setattr(self, name, new_space)
-        return new_space
-
-    def _get_config(self, base_name):
-        """ Return iterator which returns ``(key, value)`` tuples.
-
-            :param str base_name: Base namespace
-
-        """
-        for name, value in self._config.items():
-            name = base_name + '.' + name
-            # Allow for nested namespaces
-            if isinstance(value, Namespace):
-                for subkey in value._get_config(name):
-                    yield subkey
-            else:
-                yield name, value
-'''
-
-
 class Setting(object):
     """ Setting descriptor. Allows class property style access of setting
         values that are always up to date.
