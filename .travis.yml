@@ -7,7 +7,11 @@ python:
   - 3.3
   - 3.4
 
-install: python setup.py install
+env:
+  - INSTALL_ETCD="[etcd]"
+  - INSTALL_ETCD=""
+
+install: pip install -e .${INSTALL_ETCD}
 
 script:
   - coverage run --source=pyconfig setup.py test
