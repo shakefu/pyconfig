@@ -277,6 +277,7 @@ This section contains descriptions of changes in each new version.
 ^^^^^
 
 * Use `pytool.lang.Namespace` instead of alternate implementation.
+* Drops support for Python 2.6 and 3.2.
 
 2.2.1
 ^^^^^
