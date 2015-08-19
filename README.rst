@@ -273,6 +273,11 @@ Changes
 
 This section contains descriptions of changes in each new version.
 
+3.0.0
+^^^^^
+
+* Use `pytool.lang.Namespace` instead of alternate implementation.
+
 2.2.1
 ^^^^^
 

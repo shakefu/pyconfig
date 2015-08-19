@@ -18,7 +18,7 @@ def test_namespace_attr():
 def test_namespace_get_config():
     ns = pyconfig.Namespace()
     ns.test = True
-    eq_(dict(ns._get_config('ns')), {'ns.test': True})
+    eq_(ns.as_dict('ns'), {'ns.test': True})
 
 
 def test_namespace_nested_attr():
@@ -32,7 +32,7 @@ def test_namespace_nested_get_config():
     ns = pyconfig.Namespace()
     ns.nest = pyconfig.Namespace()
     ns.nest.test = True
-    eq_(dict(ns._get_config('ns')), {'ns.nest.test': True})
+    eq_(ns.as_dict('ns'), {'ns.nest.test': True})
 
 
 def test_namespace_deep_nested():
@@ -42,7 +42,7 @@ def test_namespace_deep_nested():
     ns.nest.test = True
     ns.nest.deep = pyconfig.Namespace()
     ns.nest.deep.test = True
-    eq_(dict(ns._get_config('ns')), {'ns.nest.test': True, 'ns.test': True,
+    eq_(ns.as_dict('ns'), {'ns.nest.test': True, 'ns.test': True,
         'ns.nest.deep.test': True})
 
 
@@ -51,7 +51,7 @@ def test_namespace_implicit_nesting():
     ns.test = True
     ns.nest.test = True
     ns.nest.deep.test = True
-    eq_(dict(ns._get_config('ns')), {'ns.nest.test': True, 'ns.test': True,
+    eq_(ns.as_dict('ns'), {'ns.nest.test': True, 'ns.test': True,
         'ns.nest.deep.test': True})
 
 

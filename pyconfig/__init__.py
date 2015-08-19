@@ -10,12 +10,16 @@ import logging
 import pkg_resources
 
 
+from pytool.lang import Namespace
+
+
 __version__ = '3.0.0-dev'
 
 
 log = logging.getLogger(__name__)
 
 
+'''
 class Namespace(object):
     """
     Namespace object used for creating settings module. This can be used to
@@ -59,6 +63,7 @@ class Namespace(object):
                     yield subkey
             else:
                 yield name, value
+'''
 
 
 class Setting(object):
@@ -132,7 +137,7 @@ class Config(object):
             if base_name:
                 name = base_name + '.' + name
             if isinstance(value, Namespace):
-                for name, value in value._get_config(name):
+                for name, value in value.iteritems(name):
                     self.set(name, value)
             # Automatically call any functions in the settings module, and if
             # they return a value other than None, that value becomes a setting
