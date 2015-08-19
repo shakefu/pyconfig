@@ -9,7 +9,11 @@ python:
 
 install: python setup.py install
 
-script: nosetests
+script:
+  - coverage run --source=pyconfig setup.py test
 
 before_script:
-  - pip install nose
+  - pip install nose mock coverage coveralls
+
+after_success:
+  - coveralls
