@@ -10,7 +10,9 @@ env:
   - >
     INSTALL_ETCD=2.1.1
     EXTRA_ETCD="[etcd]"
-  - EXTRA_ETCD=""
+  - >
+    INSTALL_ETCD=2.1.1
+    EXTRA_ETCD=""
 
 install: pip install -e .${EXTRA_ETCD}
 
