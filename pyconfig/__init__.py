@@ -60,8 +60,8 @@ class Config(object):
 
         # Only load the first time
         if not self._init:
-            self.load()
             self._init = True
+            self.load()
 
     def set(self, name, value):
         """ Changes a setting value.
@@ -70,6 +70,8 @@ class Config(object):
             :param value: Setting value.
 
         """
+        if not self.settings.get('pyconfig.case_sensitive', False):
+            name = name.lower()
         log.info("    %s = %s", name, repr(value))
         self.settings[name] = value
 
@@ -187,6 +189,8 @@ class Config(object):
             :raises: :exc:`LookupError` if allow_default is false and the setting is
                      not set.
         """
+        if not self.settings.get('pyconfig.case_sensitive', False):
+            name = name.lower()
         if name not in self.settings:
             if not allow_default:
                 raise LookupError('No setting "{name}"'.format(name=name))

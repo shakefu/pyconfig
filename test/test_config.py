@@ -185,3 +185,17 @@ def test_get_default_with_various_values():
 def test_localconfig_py_actually_works():
     eq_(pyconfig.get('conf.local', False), True)
 
+
+def test_case_insensitivity():
+    pyconfig.set('SomeSetting', True)
+    eq_(pyconfig.get('SomeSetting'), True)
+    eq_(pyconfig.get('somesetting'), True)
+
+
+def test_case_sensitive():
+    pyconfig.set('pyconfig.case_sensitive', True)
+    pyconfig.set('CaseSensitive', True)
+    eq_(pyconfig.get('CaseSensitive'), True)
+    eq_(pyconfig.get('casesensitive'), None)
+    pyconfig.reload(clear=True)
+
