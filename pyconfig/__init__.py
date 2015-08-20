@@ -10,13 +10,9 @@ import runpy
 import logging
 import pkg_resources
 
-
+import six
 import pytool
 from pytool.lang import Namespace
-try:
-    import etcd
-except:
-    etcd = None
 
 
 __version__ = '3.0.0-dev'
@@ -55,7 +51,6 @@ class Config(object):
     """
     _self = dict(
             _init=False,
-            _etcd_client=None,
             settings={},
             reload_hooks=[])
 
@@ -211,47 +206,6 @@ class Config(object):
         """
         self.reload_hooks.append(hook)
 
-    def load_from_etcd(self, prefix='config'):
-        """
-        Loads a configuration from etcd.
-
-        """
-        if not self.etcd:
-            log.debug("etcd not available")
-            return
-
-        log.info("Loading from etcd %r", prefix)
-        result = self.etcd.get(prefix)
-        if not result:
-            log.info("No configuration found")
-
-        update = {}
-        for item in result.children:
-            key = item.key
-            value = item.value
-            try:
-                value = pytool.json.from_json(value)
-            except:
-                pass
-
-            if key.startswith(prefix):
-                key = key[len(prefix):]
-
-            update[key] = value
-
-        return update
-
-    @property
-    def etcd(self):
-        # If we don't use etcd, get out
-        if not etcd:
-            return None
-        if not self._etcd_client:
-            # Inititalize client
-            self._etcd_client = etcd.Client(port=2379)
-
-        return self._etcd_client
-
 
 def reload(clear=False):
     """ Shortcut method for calling reload. """
@@ -314,4 +268,184 @@ def deferred():
     """
     pass
 
+
+class etcd(object):
+    """
+    Singleton for the etcd client and helper methods.
+
+    """
+    _self = dict(
+            _init=False,
+            client=None,
+            module=None,
+            )
+
+    def __init__(self, *args, **kwargs):
+        # Use a borg singleton
+        self.__dict__ = self._self
+
+        # Get config settings
+        self.prefix = kwargs.pop('prefix', env('PYCONFIG_ETCD_PREFIX', None))
+        self.case_sensitive = get('pyconfig.case_sensitive', False)
+        # Get inheritance settings
+        # XXX shakefu: These might need env vars at some point
+        self.inherit = kwargs.pop('inherit', True)
+        self.inherit_key = kwargs.pop('inherit_key', 'pyconfig.inherit')
+        self.inherit_depth = kwargs.pop('inherit_depth', 1)
+
+        # Only load the client the first time
+        if not self._init:
+            self.init(*args, **kwargs)
+            self._init = True
+
+    @property
+    def configured(self):
+        if not self.module or not self.client:
+            return False
+        return True
+
+    def init(self, hosts=None, cacert=None, client_cert=None, client_key=None):
+        """
+        Handle creating the new etcd client instance and other business.
+
+        :param hosts: Host string or list of hosts (default: `'127.0.0.1:2379'`)
+        :param cacert: CA cert filename (optional)
+        :param client_cert: Client cert filename (optional)
+        :param client_key: Client key filename (optional)
+        :type ca: str
+        :type cert: str
+        :type key: str
+
+        """
+        # Try to get the etcd module
+        try:
+            import etcd
+            self.module = etcd
+        except ImportError:
+            pass
+
+        if not self.module:
+            return
+
+        # Check env for overriding configuration or pyconfig setting
+        hosts = env('PYCONFIG_ETCD_HOSTS', hosts)
+        cacert = env('PYCONFIG_ETCD_CACERT', cacert)
+        client_cert = env('PYCONFIG_ETCD_CLIENT_CERT', client_cert)
+        client_key = env('PYCONFIG_ETCD_CLIENT_KEY', client_key)
+
+        # Create new etcd instance
+        hosts = self._parse_hosts(hosts)
+        if hosts is None:
+            return
+
+        kw = {}
+        # Need this when passing a list of hosts to python-etcd, which we
+        # always do, even if it's a list of one
+        kw['allow_reconnect'] = True
+        # Assign the SSL args if we have 'em
+        if cacert:
+            kw['ca_cert'] = os.path.abspath(cacert)
+        if client_cert and client_key:
+            kw['cert'] = [(os.path.abspath(client_cert),
+                os.path.abspath(client_key))]
+        elif client_cert:
+            kw['cert'] = os.path.abspath(client_cert)
+
+        self.client = self.module.Client(hosts, **kw)
+
+    def load(self, prefix=None, depth=None):
+        """
+        Return a dictionary of settings loaded from etcd.
+
+        """
+        prefix = prefix or self.prefix
+        prefix = '/' + prefix.strip('/') + '/'
+        depth = depth or self.inherit_depth
+
+        if not self.configured:
+            log.debug("etcd not available")
+            return
+
+        log.info("Loading from etcd %r", prefix)
+        try:
+            result = self.client.get(prefix)
+        except self.module.EtcdKeyNotFound:
+            result = None
+        if not result:
+            log.info("No configuration found")
+            return {}
+
+        update = {}
+        for item in result.children:
+            key = item.key
+            value = item.value
+            try:
+                value = pytool.json.from_json(value)
+            except:
+                pass
+
+            if not self.case_sensitive:
+                key = key.lower()
+
+            if key.startswith(prefix):
+                key = key[len(prefix):]
+
+            update[key] = value
+
+        if depth > 0 and self.inherit_key in update:
+            inherited = self.load(update[self.inherit_key], depth - 1) or {}
+            inherited.update(update)
+            update = inherited
+
+        return update
+
+    def _parse_hosts(self, hosts):
+        """
+        Return hosts parsed into a tuple of tuples.
+
+        :param hosts: String or list of hosts
+
+        """
+        # Default host
+        if hosts is None:
+            return
+
+        # If it's a string, we allow comma separated strings
+        if isinstance(hosts, six.string_types):
+            # Split comma-separated list
+            hosts = [host.strip() for host in hosts.split(',')]
+            # Split host and port
+            hosts = [host.split(':') for host in hosts]
+            # Coerce ports to int
+            hosts = [(host[0], int(host[1])) for host in hosts]
+
+        # The python-etcd client explicitly checks for a tuple type
+        return tuple(hosts)
+
+    # Getter and setter for the prefix to ensure it stays sync'd with the
+    # config and stays normalized
+    def _set_prefix(self, prefix):
+        if not prefix: return
+        set('pyconfig.etcd.prefix', '/' + prefix.strip('/') + '/')
+    def _get_prefix(self):
+        return '/'+(get('pyconfig.etcd.prefix') or '/config/').strip('/')+'/'
+    prefix = property(_get_prefix, _set_prefix)
+
+
+def env(key, default):
+    """
+    Helper to try to get a setting from the environment, or pyconfig, or
+    finally use a provided default.
+
+    """
+    value = os.environ.get(key, None)
+    if value is not None:
+        return value
+
+    key = key.lower().replace('_', '.')
+    value = get(key)
+    if value is not None:
+        return value
+
+    return default
 
