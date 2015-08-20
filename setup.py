@@ -30,6 +30,7 @@ setup(
         packages=find_packages(exclude=['test']),
         test_suite='nose.collector',
         install_requires=[
+            'six',
             'pytool',
             ],
         tests_require=[
