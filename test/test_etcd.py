@@ -20,7 +20,7 @@ def setup():
     client.set('pyconfig/test/pyconfig.string', pytool.json.as_json("Value"))
     client.set('pyconfig/test/pyconfig.json', pytool.json.as_json({"a": "b"}))
     client.set('pyconfig/test2/pyconfig.number', pytool.json.as_json(2))
-    client.set('pyconfig/test2/pyconfig.inherit',
+    client.set('pyconfig/test2/config.inherit',
             pytool.json.as_json('/pyconfig/test/'))
 
 
@@ -71,6 +71,6 @@ def test_inheritance_works():
     eq_(conf.get('pyconfig.string'), 'Value')
     eq_(conf.get('pyconfig.boolean'), True)
     eq_(conf.get('pyconfig.number'), 2)
-    eq_(conf.get('pyconfig.inherit'), '/pyconfig/test/')
+    eq_(conf.get('config.inherit'), '/pyconfig/test/')
     pyconfig.set('pyconfig.etcd.prefix', 'pyconfig/test')
 

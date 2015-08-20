@@ -294,7 +294,7 @@ class etcd(object):
         # Get inheritance settings
         # XXX shakefu: These might need env vars at some point
         self.inherit = kwargs.pop('inherit', True)
-        self.inherit_key = kwargs.pop('inherit_key', 'pyconfig.inherit')
+        self.inherit_key = kwargs.pop('inherit_key', 'config.inherit')
         self.inherit_depth = kwargs.pop('inherit_depth', 1)
 
         # Only load the client the first time
