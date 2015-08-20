@@ -17,14 +17,16 @@ script:
   - coverage run --source=pyconfig setup.py test
 
 before_script:
+  - >
+    if [ -n "$INSTALL_ETCD" ]; then
+      curl -L  https://github.com/coreos/etcd/releases/download/v${INSTALL_ETCD}/etcd-v${INSTALL_ETCD}-linux-amd64.tar.gz -o etcd-v${INSTALL_ETCD}-linux-amd64.tar.gz &&
+      tar xzvf etcd-v${INSTALL_ETCD}-linux-amd64.tar.gz &&
+      cd etcd-v${INSTALL_ETCD}-linux-amd64 &&
+      ./etcd --version &&
+      ./etcd &&
+      cd -
+    fi
   - pip install nose mock coverage coveralls
-  - curl -L  https://github.com/coreos/etcd/releases/download/v${INSTALL_ETCD}/etcd-v${INSTALL_ETCD}-linux-amd64.tar.gz -o etcd-v${INSTALL_ETCD}-linux-amd64.tar.gz
-  - tar xzvf etcd-v${INSTALL_ETCD}-linux-amd64.tar.gz
-  - cd etcd-v${INSTALL_ETCD}-linux-amd64
-  - ./etcd --version
-  - ./etcd
-  - cd -
-  - sleep 3 # Give etcd startup time
 
 after_success:
   - coveralls
