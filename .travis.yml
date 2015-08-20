@@ -6,16 +6,25 @@ python:
   - 3.4
 
 env:
-  - INSTALL_ETCD="[etcd]"
-  - INSTALL_ETCD=""
+  - >
+    INSTALL_ETCD=2.1.1
+    EXTRA_ETCD="[etcd]"
+  - EXTRA_ETCD=""
 
-install: pip install -e .${INSTALL_ETCD}
+install: pip install -e .${EXTRA_ETCD}
 
 script:
   - coverage run --source=pyconfig setup.py test
 
 before_script:
   - pip install nose mock coverage coveralls
+  - curl -L  https://github.com/coreos/etcd/releases/download/v${INSTALL_ETCD}/etcd-v${INSTALL_ETCD}-linux-amd64.tar.gz -o etcd-v${INSTALL_ETCD}-linux-amd64.tar.gz
+  - tar xzvf etcd-v${INSTALL_ETCD}-linux-amd64.tar.gz
+  - cd etcd-v${INSTALL_ETCD}-linux-amd64
+  - ./etcd --version
+  - ./etcd
+  - cd -
+  - sleep 3 # Give etcd startup time
 
 after_success:
   - coveralls
