@@ -7,8 +7,6 @@ python:
   - 3.4
 
 env:
-    _ETCD="./etcd -client-cert-auth -trusted-ca-file=${_SSL}/cacert.pem -cert-file=${_SSL}/server.crt -key-file=${_SSL}/server.key -advertise-client-urls https://127.0.0.1:2379 -listen-client-urls https://127.0.0.1:2379"
-
   - >
     _SSL="`pwd`/test/ssl"
     INSTALL_ETCD=2.1.1
