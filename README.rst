@@ -67,11 +67,93 @@ all the configuration keys defined.
    humbledb.write_concern = 1
 
 
+Etcd
+----
+
+.. versionadded:: 3.0.0
+
+Pyconfig has read-only support for configurations stored in etcd. The preferred
+method for configuring Pyconfig to work with etcd is via ENV variables, since
+they must be set as early as possible. It is also possible to use the Python
+API to make Pyconfig work with etcd.
+
+Pyconfig uses a directory namespace to store its dot notation configuration key
+names. By default, that namespace is ``/config/``.
+
+At a minimum, ``PYCONFIG_ETCD_HOSTS`` must be set to get Pyconfig to try to
+read a configuration from etcd using the default settings.
+
+You can set a value with `etcdctl` like: 
+
+.. code-block:: bash
+
+   $ # The etcdctl command is provided by etcd and not part of pyconfig
+   $ etcdctl set /pyconfig/example/my.setting "from etcd"
+
+And configure Pyconfig to connect and use that setting:
+
+.. code-block:: bash
+
+   $ export PYCONFIG_ETCD_PREFIX="/pyconfig/example/"
+   $ export PYCONFIG_ETCD_HOSTS="127.0.0.1:2379"
+   $ python
+   >>> import pyconfig
+   >>> pyconfig.get('my.setting')
+   'from etcd'
+
+Because of Pyconfig's singleton nature, only one configuration can be accessed
+at a time in this way.
+
+**Environment variables:**
+
+* ``PYCONFIG_ETCD_PREFIX`` - The namespace to prefix settings with (default:
+  ``'/config/'``)
+* ``PYCONFIG_ETCD_HOSTS`` - A comma separated list of hosts, like
+  ``10.0.0.1:2379,10.0.0.2:2379``
+* ``PYCONFIG_ETCD_CACERT`` - CA cert file to use for SSL
+* ``PYCONFIG_ETCD_CERT`` - Client cert file to use for SSL client authentication  
+* ``PYCONFIG_ETCD_KEY`` - Client private key file to use for SSL client auth 
+
+**Inheritance:**
+
+If you want to create a configuration that inherits from an existing
+configuration, Pyconfig will look for a special key, which by default is set to
+``config.inherit``. If this exists and is set to an etcd namespace, that
+configuration will be used as the base for the current config.
+
+A typical use case would be a Test environment configuration which is derived
+from a Development config. Below is a barebones example of how that might be
+set up using `etcdctl` and Pyconfig.
+
+.. code-block:: bash
+
+   $ # Create the development settings
+   $ etcdctl set /config/app/dev/my.name example
+   $ etcdctl set /config/app/dev/my.hostname localhost
+   $ etcdctl set /config/app/dev/my.api.key abcdef0123456789
+   $ # Create the test settings
+   $ etcdctl set /config/app/test/my.hostname test.example.com
+   $ # Tell it to inherit from the development settings
+   $ etcdctl set /config/app/test/config.inherit /config/app/dev/
+   $ # Configure Pyconfig to use the test configuration
+   $ export PYCONFIG_ETCD_PREFIX="/config/app/test/"
+   $ export PYCONFIG_ETCD_HOSTS="127.0.0.1:2379"
+   $ python
+   >>> import pyconfig
+   >>> pyconfig.get('my.hostname')
+   'test.example.com'
+   >>> pyconfig.get('my.name')
+   'example'
+
+
 Code Examples
 -------------
 
 The most basic usage allows you to get, retrieve and modify values. Pyconfig's
 singleton provides convenient accessor methods for these actions:
+
+.. versionchanged:: 3.0.0
+   As of version 3.0.0, keys are not case sensitive by default.
 
 .. code-block:: python
 
@@ -277,10 +359,11 @@ This section contains descriptions of changes in each new version.
 ^^^^^
 
 * Adds support for loading configurations from etcd, with inheritance.
-* Use `pytool.lang.Namespace` instead of alternate implementation.
+* Use ``pytool.lang.Namespace`` instead of alternate implementation.
 * Drops support for Python 2.6 and 3.2.
 * Pyconfig setting keys are now case insensitive by default
-  * Use `pyconfig.set('pyconfig.case_sensitive', True)` to change the behavior
+  * Use ``pyconfig.set('pyconfig.case_sensitive', True)`` to change the behavior
+* Adds new ``clear()`` method for wiping out the cached configuration.
 
 2.2.1
 ^^^^^
