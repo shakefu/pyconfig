@@ -30,6 +30,7 @@ def teardown():
 
     # Clean up the test namespace
     pyconfig.etcd().client.delete('pyconfig/test', dir=True, recursive=True)
+    pyconfig.etcd().client.delete('pyconfig/test2', dir=True, recursive=True)
 
 
 def test_using_correct_prefix():

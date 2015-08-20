@@ -314,8 +314,8 @@ class etcd(object):
 
         # Only load the client the first time
         if not self._init:
-            self.init(*args, **kwargs)
             self._init = True
+            self.init(*args, **kwargs)
 
     @property
     def configured(self):
@@ -413,8 +413,11 @@ class etcd(object):
 
             update[key] = value
 
-        if depth > 0 and self.inherit_key in update:
-            inherited = self.load(update[self.inherit_key], depth - 1) or {}
+        # Access cached settings directly to avoid recursion
+        inherited = Config().settings.get(self.inherit_key,
+                update.get(self.inherit_key, None))
+        if depth > 0 and inherited:
+            inherited = self.load(inherited, depth - 1) or {}
             inherited.update(update)
             update = inherited
 
