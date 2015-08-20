@@ -13,7 +13,7 @@ env:
     EXTRA_ETCD="[etcd]"
     ETCD_TRUSTED_CA_FILE="${_SSL}/cacert.pem"
     ETCD_CERT_FILE="${_SSL}/server.crt"
-    ETCD_KEY_FILE="{$_SSL}/server.key"
+    ETCD_KEY_FILE="${_SSL}/server.key"
     ETCD_ADVERTISE_CLIENT_URLS="https://127.0.0.1:2379"
     ETCD_LISTEN_CLIENT_URLS="https://127.0.0.1:2379"
     PYCONFIG_ETCD_HOSTS="127.0.0.1:2379"
