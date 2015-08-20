@@ -23,7 +23,7 @@ before_script:
       tar xzvf etcd-v${INSTALL_ETCD}-linux-amd64.tar.gz &&
       cd etcd-v${INSTALL_ETCD}-linux-amd64 &&
       ./etcd --version &&
-      ./etcd &&
+      ./etcd & &&
       cd -
     fi
   - pip install nose mock coverage coveralls
