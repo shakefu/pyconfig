@@ -350,8 +350,8 @@ class etcd(object):
         if cacert:
             kw['ca_cert'] = os.path.abspath(cacert)
         if client_cert and client_key:
-            kw['cert'] = [(os.path.abspath(client_cert),
-                os.path.abspath(client_key))]
+            kw['cert'] = ((os.path.abspath(client_cert),
+                os.path.abspath(client_key)))
         elif client_cert:
             kw['cert'] = os.path.abspath(client_cert)
         if cacert or client_cert or client_key:
