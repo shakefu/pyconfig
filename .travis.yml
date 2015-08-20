@@ -10,6 +10,7 @@ env:
   - >
     INSTALL_ETCD=2.1.1
     EXTRA_ETCD="[etcd]"
+    PYCONFIG_ETCD_HOSTS="127.0.0.1:2379"
   - >
     INSTALL_ETCD=2.1.1
     EXTRA_ETCD=""
