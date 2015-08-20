@@ -354,6 +354,8 @@ class etcd(object):
                 os.path.abspath(client_key))]
         elif client_cert:
             kw['cert'] = os.path.abspath(client_cert)
+        if cacert or client_cert or client_key:
+            kw['protocol'] = 'https'
 
         self.client = self.module.Client(hosts, **kw)
 
