@@ -74,3 +74,11 @@ def test_inheritance_works():
     eq_(conf.get('config.inherit'), '/pyconfig/test/')
     pyconfig.set('pyconfig.etcd.prefix', 'pyconfig/test')
 
+
+def test_autoloading_etcd_config_works():
+    pyconfig.Config().clear()
+    pyconfig.set('pyconfig.etcd.prefix', 'pyconfig/test2')
+    pyconfig.reload()
+    eq_(pyconfig.get('pyconfig.string'), 'Value')
+    eq_(pyconfig.get('pyconfig.number'), 2)
+

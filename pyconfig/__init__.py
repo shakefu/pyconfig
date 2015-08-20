@@ -145,6 +145,12 @@ class Config(object):
             log.info("Loading deferred module '%s'", mod_name)
             self._update(mod_dict, base_name)
 
+        if etcd().configured:
+            # Load etcd stuff
+            mod_dict = etcd().load()
+            if mod_dict:
+                self._update(mod_dict)
+
         # Allow localconfig overrides
         mod_dict = None
         try:
@@ -210,6 +216,10 @@ class Config(object):
         """
         self.reload_hooks.append(hook)
 
+    def clear(self):
+        """ Clears all the cached configuration. """
+        self.settings = {}
+
 
 def reload(clear=False):
     """ Shortcut method for calling reload. """
@@ -248,6 +258,11 @@ def reload_hook(func):
     """ Decorator for registering a reload hook. """
     Config().add_reload_hook(func)
     return func
+
+
+def clear():
+    """ Shortcut for clearing all settings. """
+    Config().clear()
 
 
 def deferred():
