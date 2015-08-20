@@ -26,6 +26,8 @@ before_script:
       ./etcd --version &&
       ./etcd & &&
       cd -
+    else
+      true;
     fi
   - pip install nose mock coverage coveralls
 
