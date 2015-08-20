@@ -276,6 +276,7 @@ This section contains descriptions of changes in each new version.
 3.0.0
 ^^^^^
 
+* Adds support for loading configurations from etcd, with inheritance.
 * Use `pytool.lang.Namespace` instead of alternate implementation.
 * Drops support for Python 2.6 and 3.2.
 * Pyconfig setting keys are now case insensitive by default
