@@ -334,8 +334,8 @@ class etcd(object):
         # Check env for overriding configuration or pyconfig setting
         hosts = env('PYCONFIG_ETCD_HOSTS', hosts)
         cacert = env('PYCONFIG_ETCD_CACERT', cacert)
-        client_cert = env('PYCONFIG_ETCD_CLIENT_CERT', client_cert)
-        client_key = env('PYCONFIG_ETCD_CLIENT_KEY', client_key)
+        client_cert = env('PYCONFIG_ETCD_CERT', client_cert)
+        client_key = env('PYCONFIG_ETCD_KEY', client_key)
 
         # Create new etcd instance
         hosts = self._parse_hosts(hosts)
