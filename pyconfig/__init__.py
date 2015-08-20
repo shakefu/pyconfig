@@ -4,13 +4,19 @@ Pyconfig
 
 """
 from __future__ import print_function, unicode_literals
+import os
 import sys
 import runpy
 import logging
 import pkg_resources
 
 
+import pytool
 from pytool.lang import Namespace
+try:
+    import etcd
+except:
+    etcd = None
 
 
 __version__ = '3.0.0-dev'
@@ -49,6 +55,7 @@ class Config(object):
     """
     _self = dict(
             _init=False,
+            _etcd_client=None,
             settings={},
             reload_hooks=[])
 
@@ -204,6 +211,47 @@ class Config(object):
         """
         self.reload_hooks.append(hook)
 
+    def load_from_etcd(self, prefix='config'):
+        """
+        Loads a configuration from etcd.
+
+        """
+        if not self.etcd:
+            log.debug("etcd not available")
+            return
+
+        log.info("Loading from etcd %r", prefix)
+        result = self.etcd.get(prefix)
+        if not result:
+            log.info("No configuration found")
+
+        update = {}
+        for item in result.children:
+            key = item.key
+            value = item.value
+            try:
+                value = pytool.json.from_json(value)
+            except:
+                pass
+
+            if key.startswith(prefix):
+                key = key[len(prefix):]
+
+            update[key] = value
+
+        return update
+
+    @property
+    def etcd(self):
+        # If we don't use etcd, get out
+        if not etcd:
+            return None
+        if not self._etcd_client:
+            # Inititalize client
+            self._etcd_client = etcd.Client(port=2379)
+
+        return self._etcd_client
+
 
 def reload(clear=False):
     """ Shortcut method for calling reload. """
@@ -265,4 +313,5 @@ def deferred():
 
     """
     pass
+
 
