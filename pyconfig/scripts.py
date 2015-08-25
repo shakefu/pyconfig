@@ -201,6 +201,12 @@ class _PyconfigCall(object):
         Return the default argument, formatted nicely.
 
         """
+        try:
+            # Check if it's iterable
+            iter(self.default)
+        except TypeError:
+            return repr(self.default)
+
         # This is to look for unparsable values, and if we find one, we try to
         # directly parse the string
         for v in self.default:
