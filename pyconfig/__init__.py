@@ -381,7 +381,8 @@ class etcd(object):
         """
         prefix = prefix or self.prefix
         prefix = '/' + prefix.strip('/') + '/'
-        depth = depth or self.inherit_depth
+        if depth is None:
+            depth = self.inherit_depth
 
         if not self.configured:
             log.debug("etcd not available")
