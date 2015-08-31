@@ -18,11 +18,6 @@ from pytool.lang import Namespace
 __version__ = '3.0.0-dev'
 
 
-# Helpful logging is helpful
-if not logging.root.handlers:
-    logging.basicConfig()
-
-
 log = logging.getLogger(__name__)
 
 
