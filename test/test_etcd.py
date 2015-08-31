@@ -12,16 +12,16 @@ def setup():
     if not pyconfig.etcd().configured:
         raise SkipTest("etcd not configured")
 
-    pyconfig.set('pyconfig.etcd.prefix', '/pyconfig/test/')
+    pyconfig.set('pyconfig.etcd.prefix', '/pyconfig_test/test/')
 
     client = pyconfig.etcd().client
-    client.set('pyconfig/test/pyconfig.number', pytool.json.as_json(1))
-    client.set('pyconfig/test/pyconfig.boolean', pytool.json.as_json(True))
-    client.set('pyconfig/test/pyconfig.string', pytool.json.as_json("Value"))
-    client.set('pyconfig/test/pyconfig.json', pytool.json.as_json({"a": "b"}))
-    client.set('pyconfig/test2/pyconfig.number', pytool.json.as_json(2))
-    client.set('pyconfig/test2/config.inherit',
-            pytool.json.as_json('/pyconfig/test/'))
+    client.set('pyconfig_test/test/pyconfig.number', pytool.json.as_json(1))
+    client.set('pyconfig_test/test/pyconfig.boolean', pytool.json.as_json(True))
+    client.set('pyconfig_test/test/pyconfig.string', pytool.json.as_json("Value"))
+    client.set('pyconfig_test/test/pyconfig.json', pytool.json.as_json({"a": "b"}))
+    client.set('pyconfig_test/test2/pyconfig.number', pytool.json.as_json(2))
+    client.set('pyconfig_test/test2/config.inherit',
+            pytool.json.as_json('/pyconfig_test/test/'))
 
 
 def teardown():
@@ -29,12 +29,13 @@ def teardown():
         return
 
     # Clean up the test namespace
-    pyconfig.etcd().client.delete('pyconfig/test', dir=True, recursive=True)
-    pyconfig.etcd().client.delete('pyconfig/test2', dir=True, recursive=True)
+    pyconfig.etcd().client.delete('pyconfig_test/test', dir=True, recursive=True)
+    pyconfig.etcd().client.delete('pyconfig_test/test2', dir=True, recursive=True)
+    pyconfig.etcd().client.delete('pyconfig_test/', dir=True, recursive=True)
 
 
 def test_using_correct_prefix():
-    eq_(pyconfig.etcd().prefix, '/pyconfig/test/')
+    eq_(pyconfig.etcd().prefix, '/pyconfig_test/test/')
 
 
 def test_parse_hosts_single_host():
@@ -61,29 +62,29 @@ def test_changing_prefix_works():
     eq_(pyconfig.etcd().prefix, '/pyconfig/other/')
     conf = pyconfig.etcd().load()
     eq_(conf, {})
-    pyconfig.set('pyconfig.etcd.prefix', 'pyconfig/test')
-    eq_(pyconfig.etcd().prefix, '/pyconfig/test/')
+    pyconfig.set('pyconfig.etcd.prefix', 'pyconfig_test/test')
+    eq_(pyconfig.etcd().prefix, '/pyconfig_test/test/')
 
 
 def test_inheritance_works():
-    pyconfig.set('pyconfig.etcd.prefix', 'pyconfig/test2')
+    pyconfig.set('pyconfig.etcd.prefix', 'pyconfig_test/test2')
     conf = pyconfig.etcd().load()
     eq_(conf.get('pyconfig.json'), {"a": "b"})
     eq_(conf.get('pyconfig.string'), 'Value')
     eq_(conf.get('pyconfig.boolean'), True)
     eq_(conf.get('pyconfig.number'), 2)
-    eq_(conf.get('config.inherit'), '/pyconfig/test/')
-    pyconfig.set('pyconfig.etcd.prefix', 'pyconfig/test')
+    eq_(conf.get('config.inherit'), '/pyconfig_test/test/')
+    pyconfig.set('pyconfig.etcd.prefix', 'pyconfig_test/test')
 
 
 def test_reload_work_with_inheritance():
-    pyconfig.set('pyconfig.etcd.prefix', 'pyconfig/test2')
+    pyconfig.set('pyconfig.etcd.prefix', 'pyconfig_test/test2')
     pyconfig.reload()
 
 
 def test_autoloading_etcd_config_works():
     pyconfig.Config().clear()
-    pyconfig.set('pyconfig.etcd.prefix', 'pyconfig/test2')
+    pyconfig.set('pyconfig.etcd.prefix', 'pyconfig_test/test2')
     pyconfig.reload()
     eq_(pyconfig.get('pyconfig.string'), 'Value')
     eq_(pyconfig.get('pyconfig.number'), 2)
