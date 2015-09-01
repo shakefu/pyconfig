@@ -418,6 +418,7 @@ class etcd(object):
         inherited = Config().settings.get(self.inherit_key,
                 update.get(self.inherit_key, None))
         if depth > 0 and inherited:
+            log.info("    ... inheriting ...")
             inherited = self.load(inherited, depth - 1) or {}
             inherited.update(update)
             update = inherited
@@ -465,6 +466,7 @@ def env(key, default):
     """
     value = os.environ.get(key, None)
     if value is not None:
+        log.info('    %s = %r', key.lower().replace('_', '.'), value)
         return value
 
     key = key.lower().replace('_', '.')
