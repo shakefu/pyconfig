@@ -362,8 +362,8 @@ This section contains descriptions of changes in each new version.
 * Use ``pytool.lang.Namespace`` instead of alternate implementation.
 * Drops support for Python 2.6 and 3.2.
 * Pyconfig setting keys are now case insensitive by default
-    * Use ``pyconfig.set('pyconfig.case_sensitive', True)`` to change the
-      behavior
+  * Use ``pyconfig.set('pyconfig.case_sensitive', True)`` to change the
+    behavior
 * Adds new ``clear()`` method for wiping out the cached configuration.
 
 2.2.1
