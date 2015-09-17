@@ -15,7 +15,7 @@ import pytool
 from pytool.lang import Namespace
 
 
-__version__ = '3.0.0-dev'
+__version__ = '3.0.0'
 
 
 log = logging.getLogger(__name__)
