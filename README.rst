@@ -355,6 +355,11 @@ Changes
 
 This section contains descriptions of changes in each new version.
 
+3.0.1
+^^^^^
+
+* Changes the default inherit depth to 2, which is more useful than 1.
+
 3.0.0
 ^^^^^
 

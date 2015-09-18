@@ -15,7 +15,7 @@ import pytool
 from pytool.lang import Namespace
 
 
-__version__ = '3.0.0'
+__version__ = '3.0.1'
 
 
 log = logging.getLogger(__name__)
@@ -310,7 +310,8 @@ class etcd(object):
         # XXX shakefu: These might need env vars at some point
         self.inherit = kwargs.pop('inherit', True)
         self.inherit_key = kwargs.pop('inherit_key', 'config.inherit')
-        self.inherit_depth = kwargs.pop('inherit_depth', 1)
+        self.inherit_depth = kwargs.pop('inherit_depth',
+                env('PYCONFIG_INHERIT_DEPTH', 2))
 
         # Only load the client the first time
         if not self._init:
