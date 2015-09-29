@@ -355,6 +355,13 @@ Changes
 
 This section contains descriptions of changes in each new version.
 
+3.0.2
+^^^^^
+
+* Fixes an issue when using Python 3 compatibility in Python 2.7 and PyOpenSSL.
+
+  *Released September 28, 2015.*
+
 3.0.1
 ^^^^^
 
