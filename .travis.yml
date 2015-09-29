@@ -18,6 +18,7 @@ env:
     ETCD_LISTEN_CLIENT_URLS="https://127.0.0.1:2379"
     PYCONFIG_ETCD_HOSTS="127.0.0.1:2379"
     PYCONFIG_ETCD_CACERT="${_SSL}/cacert.pem"
+    PYOPENSSL=""
   - >
     INSTALL_ETCD=2.1.1
     EXTRA_ETCD="[etcd]"
@@ -32,15 +33,33 @@ env:
     PYCONFIG_ETCD_CACERT="${_SSL}/cacert.pem"
     PYCONFIG_ETCD_CERT="${_SSL}/client.crt"
     PYCONFIG_ETCD_KEY="${_SSL}/client.key"
+    PYOPENSSL=""
+  - >
+    INSTALL_ETCD=2.1.1
+    EXTRA_ETCD="[etcd]"
+    _SSL="`pwd`/test/ssl"
+    ETCD_CLIENT_CERT_AUTH=1
+    ETCD_TRUSTED_CA_FILE="${_SSL}/cacert.pem"
+    ETCD_CERT_FILE="${_SSL}/server.crt"
+    ETCD_KEY_FILE="${_SSL}/server.key"
+    ETCD_ADVERTISE_CLIENT_URLS="https://127.0.0.1:2379"
+    ETCD_LISTEN_CLIENT_URLS="https://127.0.0.1:2379"
+    PYCONFIG_ETCD_HOSTS="127.0.0.1:2379"
+    PYCONFIG_ETCD_CACERT="${_SSL}/cacert.pem"
+    PYCONFIG_ETCD_CERT="${_SSL}/client.crt"
+    PYCONFIG_ETCD_KEY="${_SSL}/client.key"
+    PYOPENSSL="pyopenssl"
   - >
     INSTALL_ETCD=2.1.1
     EXTRA_ETCD="[etcd]"
     PYCONFIG_ETCD_HOSTS="127.0.0.1:2379"
+    PYOPENSSL=""
   - >
     INSTALL_ETCD=2.1.1
     EXTRA_ETCD=""
+    PYOPENSSL=""
 
-install: pip install -e .${EXTRA_ETCD}
+install: pip install -e .${EXTRA_ETCD} ${PYOPENSSL}
 
 script:
   - coverage run --source=pyconfig setup.py test
