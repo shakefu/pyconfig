@@ -371,7 +371,8 @@ class etcd(object):
         elif client_cert:
             kw['cert'] = os.path.abspath(client_cert)
         if cacert or client_cert or client_key:
-            kw['protocol'] = 'https'
+            # This needs to not be unicode, otherwise it breaks pyOpenSSL
+            kw['protocol'] = six.binary_type('https')
 
         self.client = self.module.Client(hosts, **kw)
 
@@ -443,8 +444,9 @@ class etcd(object):
             hosts = [host.strip() for host in hosts.split(',')]
             # Split host and port
             hosts = [host.split(':') for host in hosts]
-            # Coerce ports to int
-            hosts = [(host[0], int(host[1])) for host in hosts]
+            # Coerce ports to int and ensure hostname isn't unicode, because
+            # that breaks pyOpenSSL
+            hosts = [(six.binary_type(host[0]), int(host[1])) for host in hosts]
 
         # The python-etcd client explicitly checks for a tuple type
         return tuple(hosts)
