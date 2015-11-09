@@ -398,21 +398,26 @@ class etcd(object):
             log.info("No configuration found")
             return {}
 
+        # Iterate over the returned keys from etcd
         update = {}
         for item in result.children:
             key = item.key
             value = item.value
+            # Try to parse them as JSON strings, just in case it works
             try:
                 value = pytool.json.from_json(value)
             except:
                 pass
 
+            # Make the key lower-case if we're not case-sensitive
             if not self.case_sensitive:
                 key = key.lower()
 
+            # Strip off the prefix that we're using
             if key.startswith(prefix):
                 key = key[len(prefix):]
 
+            # Store the key/value to update the config
             update[key] = value
 
         # Access cached settings directly to avoid recursion
@@ -476,4 +481,19 @@ def env(key, default):
         return value
 
     return default
+
+
+def env_key(key, default):
+    """
+    Try to get `key` from the environment.
+
+    This mutates `key` to replace dots with underscores and makes it all
+    uppercase.
+
+        my.database.host => MY_DATABASE_HOST
+
+    """
+    env = key.upper().replace('.', '_')
+    return os.environ.get(env, default)
+
 

@@ -2,6 +2,7 @@
 Tests for pyconfig
 """
 from __future__ import print_function, unicode_literals
+import os
 
 import mock
 
@@ -198,4 +199,13 @@ def test_case_sensitive():
     eq_(pyconfig.get('CaseSensitive'), True)
     eq_(pyconfig.get('casesensitive'), None)
     pyconfig.reload(clear=True)
+
+
+def test_env_key_should_return_default():
+    eq_(pyconfig.env_key('testing.key', 1), 1)
+
+
+def test_env_key_should_return_from_environ():
+    os.environ['TESTING_KEY'] = "true"
+    eq_(pyconfig.env_key('testing.key', 1), "true")
 
