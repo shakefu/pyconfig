@@ -54,7 +54,8 @@ class Config(object):
             _init=False,
             settings={},
             reload_hooks=[],
-            mut_lock=threading.RLock())
+            mut_lock=threading.RLock(),
+            watcher=None)
 
     def __init__(self):
         # Use a borg singleton
@@ -230,7 +231,13 @@ class Config(object):
 
     def watch(self):
         """ Begins watching etcd for changes. """
-        pass
+        # Don't create a new watcher thread if we already have one running
+        if self.watcher and self.watcher.is_alive():
+            return
+
+        # Create a new watcher thread and start it
+        self.watcher = Watcher()
+        self.watcher.start()
 
 
 def reload(clear=False):
@@ -325,6 +332,9 @@ class etcd(object):
         self.inherit_depth = kwargs.pop('inherit_depth',
                 env('PYCONFIG_INHERIT_DEPTH', 2))
 
+        # See if we should watch for changes
+        self.watching = kwargs.pop('watch', env('PYCONFIG_ETCD_WATCH', False))
+
         # Only load the client the first time
         if not self._init:
             self._init = True
@@ -401,6 +411,10 @@ class etcd(object):
             log.debug("etcd not available")
             return
 
+        if self.watching:
+            log.info("Starting watcher for %r", prefix)
+            self.start_watching()
+
         log.info("Loading from etcd %r", prefix)
         try:
             result = self.client.get(prefix)
@@ -443,6 +457,23 @@ class etcd(object):
 
         return update
 
+    def watch(self):
+        """
+        Watch the configured prefix for changes.
+
+        """
+        if not self.watching:
+            raise StopIteration()
+        return self.client.eternal_watch(self.prefix, recursive=True)
+
+    def start_watching(self):
+        """
+        Kicks off the watcher.
+
+        """
+        if self.watching:
+            Config().watch()
+
     def _parse_hosts(self, hosts):
         """
         Return hosts parsed into a tuple of tuples.
@@ -483,8 +514,32 @@ class Watcher(threading.Thread):
     changes.
 
     """
+    # Ensure this thread doesn't keep the server from exiting
+    daemon = True
+
+    # Do the actual watching
     def run(self):
-        pass
+        # Just end the thread if etcd is not actually configured
+        if not etcd().configured:
+            return
+
+        for event in etcd().watch():
+            # We ignore all the events except for 'set', which changes them
+            if event.action != 'set':
+                continue
+
+            # Strip the prefix off the key name
+            key = event.key.replace(etcd().prefix, '', 1)
+
+            # Try to coerce the value from JSON
+            value = event.value
+            try:
+                value = pytool.json.from_json(value)
+            except:
+                pass
+
+            # Set the value back to the config
+            Config().set(key, value)
 
 
 def env(key, default):
