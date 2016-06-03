@@ -358,6 +358,13 @@ Changes
 
 This section contains descriptions of changes in each new version.
 
+3.1.0
+^^^^^
+
+* Adds the ability to watch etcd for changes to values.
+
+  *Released June 3, 2015.*
+
 3.0.2
 ^^^^^
 
