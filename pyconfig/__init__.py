@@ -456,7 +456,7 @@ class etcd(object):
             raise StopIteration()
         return self.client.eternal_watch(self.prefix, recursive=True)
 
-    def watch(self):
+    def start_watching(self):
         """ Begins watching etcd for changes. """
         # Don't create a new watcher thread if we already have one running
         if self.watcher and self.watcher.is_alive():
@@ -465,14 +465,6 @@ class etcd(object):
         # Create a new watcher thread and start it
         self.watcher = Watcher()
         self.watcher.start()
-
-    def start_watching(self):
-        """
-        Kicks off the watcher.
-
-        """
-        if self.watching:
-            self.watch()
 
     def _parse_hosts(self, hosts):
         """
