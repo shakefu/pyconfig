@@ -8,6 +8,7 @@ import os
 import sys
 import runpy
 import logging
+import threading
 import pkg_resources
 
 import six
@@ -52,7 +53,9 @@ class Config(object):
     _self = dict(
             _init=False,
             settings={},
-            reload_hooks=[])
+            reload_hooks=[],
+            mut_lock=threading.RLock(),
+            )
 
     def __init__(self):
         # Use a borg singleton
@@ -66,6 +69,9 @@ class Config(object):
     def set(self, name, value):
         """ Changes a setting value.
 
+            This implements a locking mechanism to ensure some level of thread
+            safety.
+
             :param str name: Setting key name.
             :param value: Setting value.
 
@@ -73,7 +79,10 @@ class Config(object):
         if not self.settings.get('pyconfig.case_sensitive', False):
             name = name.lower()
         log.info("    %s = %s", name, repr(value))
-        self.settings[name] = value
+
+        # Acquire our lock to change the config
+        with self.mut_lock:
+            self.settings[name] = value
 
     def _update(self, conf_dict, base_name=None):
         """ Updates the current configuration with the values in `conf_dict`.
@@ -220,7 +229,6 @@ class Config(object):
         """ Clears all the cached configuration. """
         self.settings = {}
 
-
 def reload(clear=False):
     """ Shortcut method for calling reload. """
     Config().reload(clear)
@@ -297,6 +305,7 @@ class etcd(object):
             _init=False,
             client=None,
             module=None,
+            watcher=None,
             )
 
     def __init__(self, *args, **kwargs):
@@ -312,6 +321,9 @@ class etcd(object):
         self.inherit_key = kwargs.pop('inherit_key', 'config.inherit')
         self.inherit_depth = kwargs.pop('inherit_depth',
                 env('PYCONFIG_INHERIT_DEPTH', 2))
+
+        # See if we should watch for changes
+        self.watching = kwargs.pop('watch', env('PYCONFIG_ETCD_WATCH', False))
 
         # Only load the client the first time
         if not self._init:
@@ -389,6 +401,10 @@ class etcd(object):
             log.debug("etcd not available")
             return
 
+        if self.watching:
+            log.info("Starting watcher for %r", prefix)
+            self.start_watching()
+
         log.info("Loading from etcd %r", prefix)
         try:
             result = self.client.get(prefix)
@@ -431,6 +447,25 @@ class etcd(object):
 
         return update
 
+    def get_watcher(self):
+        """
+        Return a etcd watching generator which yields events as they happen.
+
+        """
+        if not self.watching:
+            raise StopIteration()
+        return self.client.eternal_watch(self.prefix, recursive=True)
+
+    def start_watching(self):
+        """ Begins watching etcd for changes. """
+        # Don't create a new watcher thread if we already have one running
+        if self.watcher and self.watcher.is_alive():
+            return
+
+        # Create a new watcher thread and start it
+        self.watcher = Watcher()
+        self.watcher.start()
+
     def _parse_hosts(self, hosts):
         """
         Return hosts parsed into a tuple of tuples.
@@ -462,6 +497,41 @@ class etcd(object):
     def _get_prefix(self):
         return '/'+(get('pyconfig.etcd.prefix') or '/config/').strip('/')+'/'
     prefix = property(_get_prefix, _set_prefix)
+
+
+class Watcher(threading.Thread):
+    """
+    This is the threaded watching functionality. We have to have this be
+    threaded since the watching method in python-etcd blocks while waiting for
+    changes.
+
+    """
+    # Ensure this thread doesn't keep the server from exiting
+    daemon = True
+
+    # Do the actual watching
+    def run(self):
+        # Just end the thread if etcd is not actually configured
+        if not etcd().configured:
+            return
+
+        for event in etcd().get_watcher():
+            # We ignore all the events except for 'set', which changes them
+            if event.action != 'set':
+                continue
+
+            # Strip the prefix off the key name
+            key = event.key.replace(etcd().prefix, '', 1)
+
+            # Try to coerce the value from JSON
+            value = event.value
+            try:
+                value = pytool.json.from_json(value)
+            except:
+                pass
+
+            # Set the value back to the config
+            Config().set(key, value)
 
 
 def env(key, default):
