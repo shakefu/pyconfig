@@ -449,7 +449,7 @@ class etcd(object):
 
     def get_watcher(self):
         """
-        Watch the configured prefix for changes.
+        Return a etcd watching generator which yields events as they happen.
 
         """
         if not self.watching:
