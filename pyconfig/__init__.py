@@ -8,6 +8,7 @@ import os
 import sys
 import runpy
 import logging
+import threading
 import pkg_resources
 
 import six
@@ -52,7 +53,8 @@ class Config(object):
     _self = dict(
             _init=False,
             settings={},
-            reload_hooks=[])
+            reload_hooks=[],
+            mut_lock=threading.RLock())
 
     def __init__(self):
         # Use a borg singleton
@@ -66,6 +68,9 @@ class Config(object):
     def set(self, name, value):
         """ Changes a setting value.
 
+            This implements a locking mechanism to ensure some level of thread
+            safety.
+
             :param str name: Setting key name.
             :param value: Setting value.
 
@@ -73,7 +78,10 @@ class Config(object):
         if not self.settings.get('pyconfig.case_sensitive', False):
             name = name.lower()
         log.info("    %s = %s", name, repr(value))
-        self.settings[name] = value
+
+        # Acquire our lock to change the config
+        with mut_lock:
+            self.settings[name] = value
 
     def _update(self, conf_dict, base_name=None):
         """ Updates the current configuration with the values in `conf_dict`.
@@ -219,6 +227,10 @@ class Config(object):
     def clear(self):
         """ Clears all the cached configuration. """
         self.settings = {}
+
+    def watch(self):
+        """ Begins watching etcd for changes. """
+        pass
 
 
 def reload(clear=False):
@@ -462,6 +474,17 @@ class etcd(object):
     def _get_prefix(self):
         return '/'+(get('pyconfig.etcd.prefix') or '/config/').strip('/')+'/'
     prefix = property(_get_prefix, _set_prefix)
+
+
+class Watcher(threading.Thread):
+    """
+    This is the threaded watching functionality. We have to have this be
+    threaded since the watching method in python-etcd blocks while waiting for
+    changes.
+
+    """
+    def run(self):
+        pass
 
 
 def env(key, default):
