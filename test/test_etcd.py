@@ -102,9 +102,6 @@ def test_watching():
     pyconfig.set('pyconfig.etcd.prefix', 'pyconfig_test/watching')
     pyconfig.reload()
 
-    if not pyconfig.etcd().watching:
-        raise SkipTest
-
     # Wait for 20ms before writing to ensure the watcher thread is ready
     time.sleep(0.020)
 
