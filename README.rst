@@ -113,6 +113,9 @@ at a time in this way.
 * ``PYCONFIG_ETCD_CACERT`` - CA cert file to use for SSL
 * ``PYCONFIG_ETCD_CERT`` - Client cert file to use for SSL client authentication  
 * ``PYCONFIG_ETCD_KEY`` - Client private key file to use for SSL client auth 
+* ``PYCONFIG_ETCD_WATCH`` - If this is set to a truthy value (a non-empty
+  string), then pyconfig will keep the local configuration synchronized with
+  etcd
 
 **Inheritance:**
 
