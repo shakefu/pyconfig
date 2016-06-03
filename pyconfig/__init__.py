@@ -55,7 +55,7 @@ class Config(object):
             settings={},
             reload_hooks=[],
             mut_lock=threading.RLock(),
-            watcher=None)
+            )
 
     def __init__(self):
         # Use a borg singleton
@@ -229,17 +229,6 @@ class Config(object):
         """ Clears all the cached configuration. """
         self.settings = {}
 
-    def watch(self):
-        """ Begins watching etcd for changes. """
-        # Don't create a new watcher thread if we already have one running
-        if self.watcher and self.watcher.is_alive():
-            return
-
-        # Create a new watcher thread and start it
-        self.watcher = Watcher()
-        self.watcher.start()
-
-
 def reload(clear=False):
     """ Shortcut method for calling reload. """
     Config().reload(clear)
@@ -316,6 +305,7 @@ class etcd(object):
             _init=False,
             client=None,
             module=None,
+            watcher=None,
             )
 
     def __init__(self, *args, **kwargs):
@@ -457,7 +447,7 @@ class etcd(object):
 
         return update
 
-    def watch(self):
+    def get_watcher(self):
         """
         Watch the configured prefix for changes.
 
@@ -466,13 +456,23 @@ class etcd(object):
             raise StopIteration()
         return self.client.eternal_watch(self.prefix, recursive=True)
 
+    def watch(self):
+        """ Begins watching etcd for changes. """
+        # Don't create a new watcher thread if we already have one running
+        if self.watcher and self.watcher.is_alive():
+            return
+
+        # Create a new watcher thread and start it
+        self.watcher = Watcher()
+        self.watcher.start()
+
     def start_watching(self):
         """
         Kicks off the watcher.
 
         """
         if self.watching:
-            Config().watch()
+            self.watch()
 
     def _parse_hosts(self, hosts):
         """
@@ -523,7 +523,7 @@ class Watcher(threading.Thread):
         if not etcd().configured:
             return
 
-        for event in etcd().watch():
+        for event in etcd().get_watcher():
             # We ignore all the events except for 'set', which changes them
             if event.action != 'set':
                 continue
