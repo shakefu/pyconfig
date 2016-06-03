@@ -80,7 +80,7 @@ class Config(object):
         log.info("    %s = %s", name, repr(value))
 
         # Acquire our lock to change the config
-        with mut_lock:
+        with self.mut_lock:
             self.settings[name] = value
 
     def _update(self, conf_dict, base_name=None):
