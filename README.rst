@@ -371,7 +371,7 @@ This section contains descriptions of changes in each new version.
 ^^^^^
 
 * Adds the ability to watch etcd for changes to values. This can be enabled by
-  setting the environment variable `PYCONFIG_ETCD_WATCH=true`.
+  setting the environment variable ``PYCONFIG_ETCD_WATCH=true``.
 
   *Released June 3, 2016.*
 
