@@ -83,7 +83,7 @@ names. By default, that namespace is ``/config/``.
 At a minimum, ``PYCONFIG_ETCD_HOSTS`` must be set to get Pyconfig to try to
 read a configuration from etcd using the default settings.
 
-You can set a value with `etcdctl` like: 
+You can set a value with `etcdctl` like:
 
 .. code-block:: bash
 
@@ -111,8 +111,8 @@ at a time in this way.
 * ``PYCONFIG_ETCD_HOSTS`` - A comma separated list of hosts, like
   ``10.0.0.1:2379,10.0.0.2:2379``
 * ``PYCONFIG_ETCD_CACERT`` - CA cert file to use for SSL
-* ``PYCONFIG_ETCD_CERT`` - Client cert file to use for SSL client authentication  
-* ``PYCONFIG_ETCD_KEY`` - Client private key file to use for SSL client auth 
+* ``PYCONFIG_ETCD_CERT`` - Client cert file to use for SSL client authentication
+* ``PYCONFIG_ETCD_KEY`` - Client private key file to use for SSL client auth
 * ``PYCONFIG_ETCD_WATCH`` - If this is set to a truthy value (a non-empty
   string), then pyconfig will keep the local configuration synchronized with
   etcd
@@ -395,67 +395,70 @@ This section contains descriptions of changes in each new version.
   ``pyconfig.set('pyconfig.case_sensitive', True)`` to change the behavior)
 * Adds new ``clear()`` method for wiping out the cached configuration.
 
+Older Versions
+^^^^^^^^^^^^^^
+
 2.2.1
-^^^^^
+"""""
 
 * The command line tool will now attempt to handle source files which specify a
   non-ascii encoding gracefully.
 
 2.2.0
-^^^^^
+"""""
 
 * Add ``allow_default`` keyword option to ``get()`` and ``setting()``. Thanks
   to `yarbelk <https://github.com/yarbelk>`_!
 
 2.1.5
-^^^^^
+"""""
 
 * Fix regression where ``localconfig.py`` wasn't being loaded on Python 2.7 due
   to a logic flow error. Whoops!
 
 2.1.4
-^^^^^
+"""""
 
 * Broke Python 2.6 in 2.1.1, fixed again.
 
 2.1.2-2.1.3
-^^^^^^^^^^^
+"""""""""""
 
 * Package clean up and fixing README to work on PyPI again.
 
 2.1.1
-^^^^^
+"""""
 
 * Fix bug that would break on Python 2.6 and 2.7 when using a localconfig.py.
 
 2.1.0
-^^^^^
+"""""
 
 * Pyconfig now works on Python 3, thanks to
   `hfalcic <https://github.com/hfalcic>`_!
 
 2.0.0
-^^^^^
+"""""
 * Pyconfig now has the ability to show you what config keys are defined in a
   directory.
 
 1.2.0
-^^^^^
+"""""
 
 * No longer uses Python 2.7 ``format()``. Should work on 2.6 and maybe earlier.
 
 1.1.2
-^^^^^
+"""""
 
 * Move version string into ``pyconfig.__version__``
 
 1.1.1
-^^^^^
+"""""
 
 * Fix bug with setup.py that prevented installation
 
 1.1.0
-^^^^^
+"""""
 
 * Allow for implicitly nesting Namespaces when accessing attributes that are
   undefined
