@@ -359,12 +359,19 @@ Changes
 
 This section contains descriptions of changes in each new version.
 
+3.1.1
+^^^^^
+
+* Documentation fixes that makes rendering work on PyPI and GitHub again.
+
+  *Released June 16, 2016.*
+
 3.1.0
 ^^^^^
 
 * Adds the ability to watch etcd for changes to values.
 
-  *Released June 3, 2015.*
+  *Released June 3, 2016.*
 
 3.0.2
 ^^^^^
