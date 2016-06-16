@@ -34,7 +34,7 @@ all the configuration keys defined.
 
 **Example output**
 
-.. code-block:: python
+.. code-block:: bash
 
    $ pyconfig --file .
    humbledb.allow_explicit_request = True
