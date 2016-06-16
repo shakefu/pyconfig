@@ -116,7 +116,7 @@ at a time in this way.
 * ``PYCONFIG_ETCD_KEY`` - Client private key file to use for SSL client auth
 * ``PYCONFIG_ETCD_WATCH`` - If this is set to a truthy value (a non-empty
   string), then pyconfig will keep the local configuration synchronized with
-  etcd
+  etcd (*Version added: 3.1.0*)
 
 **Inheritance:**
 
@@ -370,7 +370,8 @@ This section contains descriptions of changes in each new version.
 3.1.0
 ^^^^^
 
-* Adds the ability to watch etcd for changes to values.
+* Adds the ability to watch etcd for changes to values. This can be enabled by
+  setting the environment variable `PYCONFIG_ETCD_WATCH=true`.
 
   *Released June 3, 2016.*
 
