@@ -157,7 +157,7 @@ singleton provides convenient accessor methods for these actions:
 
 *Version changed: 3.0.0*
 
-   As of version 3.0.0, keys are not case sensitive by default.
+As of version 3.0.0, keys are not case sensitive by default.
 
 .. code-block:: python
 
