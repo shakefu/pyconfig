@@ -5,6 +5,7 @@ This module provides python based configuration that is stored in a singleton
 object to ensure consistency across your project.
 
 .. contents::
+   :depth: 2
    :local:
 
 Command Line
