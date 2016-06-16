@@ -70,7 +70,7 @@ all the configuration keys defined.
 Etcd
 ----
 
-.. versionadded:: 3.0.0
+*Version added: 3.0.0*
 
 Pyconfig has read-only support for configurations stored in etcd. The preferred
 method for configuring Pyconfig to work with etcd is via ENV variables, since
@@ -155,7 +155,8 @@ Code Examples
 The most basic usage allows you to get, retrieve and modify values. Pyconfig's
 singleton provides convenient accessor methods for these actions:
 
-.. versionchanged:: 3.0.0
+*Version changed: 3.0.0*
+
    As of version 3.0.0, keys are not case sensitive by default.
 
 .. code-block:: python
