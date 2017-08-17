@@ -366,6 +366,13 @@ Changes
 
 This section contains descriptions of changes in each new version.
 
+3.2.0
+^^^^^
+
+* Adds `PYCONFIG_ETCD_PROTOCOL` and `PYCONFIG_ETCD_AUTH`.
+
+  *Released August 17, 2017.*
+
 3.1.1
 ^^^^^
 
