@@ -361,9 +361,20 @@ class etcd(object):
 
         # Check env for overriding configuration or pyconfig setting
         hosts = env('PYCONFIG_ETCD_HOSTS', hosts)
+        protocol = env('PYCONFIG_ETCD_PROTOCOL', None)
         cacert = env('PYCONFIG_ETCD_CACERT', cacert)
         client_cert = env('PYCONFIG_ETCD_CERT', client_cert)
         client_key = env('PYCONFIG_ETCD_KEY', client_key)
+
+        # Parse auth string if there is one
+        username = None
+        password = None
+        auth = env('PYCONFIG_ETCD_AUTH', None)
+        if auth:
+            auth = auth.split(':')
+            auth.append('')
+            username = auth[0]
+            password = auth[1]
 
         # Create new etcd instance
         hosts = self._parse_hosts(hosts)
@@ -374,6 +385,19 @@ class etcd(object):
         # Need this when passing a list of hosts to python-etcd, which we
         # always do, even if it's a list of one
         kw['allow_reconnect'] = True
+
+        # Grab optional protocol and port arguments
+        if protocol:
+            kw['protocol'] = protocol
+        if port:
+            kw['port'] = port
+
+        # Add auth to constructor if we got it
+        if username:
+            kw['username'] = username
+        if password:
+            kw['password'] = password
+
         # Assign the SSL args if we have 'em
         if cacert:
             kw['ca_cert'] = os.path.abspath(cacert)
