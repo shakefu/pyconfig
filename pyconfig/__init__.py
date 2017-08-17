@@ -386,11 +386,9 @@ class etcd(object):
         # always do, even if it's a list of one
         kw['allow_reconnect'] = True
 
-        # Grab optional protocol and port arguments
+        # Grab optional protocol argument
         if protocol:
             kw['protocol'] = protocol
-        if port:
-            kw['port'] = port
 
         # Add auth to constructor if we got it
         if username:
