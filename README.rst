@@ -117,6 +117,12 @@ at a time in this way.
 * ``PYCONFIG_ETCD_WATCH`` - If this is set to a truthy value (a non-empty
   string), then pyconfig will keep the local configuration synchronized with
   etcd (*Version added: 3.1.0*)
+* ``PYCONFIG_ETCD_PROTOCOL`` - Set this to force HTTPS connections even if not
+  using certificates. This should be a string of the form `https` or `http`.
+  (*Version added: 3.2.0*)
+* ``PYCONFIG_ETCD_AUTH`` - Set this use Basic Authentication with requests.
+  This should be a string of the format `username:password`. (*Version added:
+  3.2.0*)
 
 **Inheritance:**
 
