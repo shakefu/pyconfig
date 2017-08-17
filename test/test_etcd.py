@@ -121,3 +121,12 @@ def test_watching():
 
     eq_(pyconfig.get('it.works', False), True)
 
+# TODO:
+# - Add tests for protocol environment variable
+def test_protocol_is_picked_up_and_used():
+    raise SkipTest("TODO")
+
+# - Add tests for auth environment variable
+def test_auth_is_picked_up_and_used():
+    raise SkipTest("TODO")
+
