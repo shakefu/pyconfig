@@ -541,7 +541,7 @@ class etcd(object):
             host, port = host.split(':')
 
         if not port and scheme == 'https':
-            port = 443
+            port = '443'
 
         if scheme:
             os.environ['PYCONFIG_ETCD_PROTOCOL'] = scheme
