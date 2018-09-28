@@ -6,7 +6,7 @@ python:
   - 3.4
   - 3.5
   - 3.6
-  - 3.7
+  # - 3.7  # Uncomment this when Python 3.7 works on Travis CI
 
 env:
   - >
