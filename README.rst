@@ -1,6 +1,9 @@
 pyconfig - Python-based singleton configuration
 ===============================================
 
+.. image:: https://travis-ci.org/shakefu/pyconfig.svg?branch=master
+    :target: https://travis-ci.org/shakefu/pyconfig
+
 This module provides python based configuration that is stored in a singleton
 object to ensure consistency across your project.
 
