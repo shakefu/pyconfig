@@ -9,7 +9,16 @@ import sys
 import runpy
 import logging
 import threading
-import pkg_resources
+try:
+    def iter_entry_points(group, **kwargs):
+        from importlib.metadata import entry_points
+        for entry_point in entry_points(group=group, **kwargs):
+            yield entry_point
+except ImportError:
+    try:
+        from pkg_resources import iter_entry_points
+    except ImportError:
+        raise ImportError("No module named 'importlib.metadata' or 'pkg_resources'")
 
 import six
 import pytool
@@ -130,7 +139,7 @@ class Config(object):
         defer = []
 
         # Load all config plugins
-        for conf in pkg_resources.iter_entry_points('pyconfig'):
+        for conf in iter_entry_points('pyconfig'):
             if conf.attrs:
                 raise RuntimeError("config must be a module")
 
