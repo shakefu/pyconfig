@@ -1,0 +1,48 @@
+---
+description: GitHub Actions security and best practices
+globs: [".github/workflows/*.yml", ".github/workflows/*.yaml", ".github/workflows/**/*.yml", ".github/workflows/**/*.yaml"]
+alwaysApply: false
+---
+
+# GitHub Actions Guidelines
+
+## Security Best Practices
+
+- **Always use commit hashes for GitHub Actions** instead of version tags
+  - This prevents supply chain attacks by ensuring we're using exact versions
+  - Include the version tag as a comment for reference
+  - Example: `uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4`
+
+## Version Management
+
+- Keep actions up to date with their latest stable versions
+- Use caching where appropriate to speed up workflows
+- Follow security best practices for GitHub Actions
+
+## Version Checking Commands
+
+Use these commands to find latest versions:
+
+```bash
+# For GitHub-hosted projects
+gh release list --repo <owner>/<repo> --limit 1
+
+# For GitHub Actions specifically
+gh api repos/<owner>/<repo>/releases/latest
+
+# For GitHub Actions versions
+gh api repos/<owner>/<repo>/tags
+```
+
+## Best Practices
+
+- Never guess or use potentially outdated versions
+- Always verify versions from official repositories
+- Keep GitHub Actions and their versions up to date
+- Use commit hashes for GitHub Actions instead of version tags
+- Include version tags as comments for reference
+
+Example format:
+```yaml
+uses: owner/repo@commit_hash # v1.2.3
+```

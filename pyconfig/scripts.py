@@ -1,18 +1,19 @@
-from __future__ import print_function, unicode_literals
-import os
-import re
-import ast
-import sys
 import _ast
 import argparse
+import ast
+import os
+import re
+import sys
 
 import pyconfig
 
 # Pygments is optional but allows for colorization of output
 try:
-    import pygments
-    import pygments.lexers
-    import pygments.formatters
+    import importlib
+
+    pygments = importlib.import_module("pygments")
+    importlib.import_module("pygments.lexers")
+    importlib.import_module("pygments.formatters")
     pygments  # Make Pyflakes stop bitching about this being unused
 except ImportError:
     pygments = None
@@ -23,43 +24,66 @@ def main():
     Main script for `pyconfig` command.
 
     """
-    parser = argparse.ArgumentParser(description="Helper for working with "
-            "pyconfigs")
+    parser = argparse.ArgumentParser(description="Helper for working with pyconfigs")
     target_group = parser.add_mutually_exclusive_group()
-    target_group.add_argument('-f', '--filename',
-            help="parse an individual file or directory",
-            metavar='F')
-    target_group.add_argument('-m', '--module',
-            help="parse a package or module, recursively looking inside it",
-            metavar='M')
-    parser.add_argument('-v', '--view-call',
-            help="show the actual pyconfig call made (default: show namespace)",
-            action='store_true')
-    parser.add_argument('-l', '--load-configs',
-            help="query the currently set value for each key found",
-            action='store_true')
+    target_group.add_argument(
+        "-f", "--filename", help="parse an individual file or directory", metavar="F"
+    )
+    target_group.add_argument(
+        "-m",
+        "--module",
+        help="parse a package or module, recursively looking inside it",
+        metavar="M",
+    )
+    parser.add_argument(
+        "-v",
+        "--view-call",
+        help="show the actual pyconfig call made (default: show namespace)",
+        action="store_true",
+    )
+    parser.add_argument(
+        "-l",
+        "--load-configs",
+        help="query the currently set value for each key found",
+        action="store_true",
+    )
     key_group = parser.add_mutually_exclusive_group()
-    key_group.add_argument('-a', '--all',
-            help="show keys which don't have defaults set",
-            action='store_true')
-    key_group.add_argument('-k', '--only-keys',
-            help="show a list of discovered keys without values",
-            action='store_true')
-    parser.add_argument('-n', '--natural-sort',
-            help="sort by filename and line (default: alphabetical by key)",
-            action='store_true')
-    parser.add_argument('-s', '--source',
-            help="show source annotations (implies --natural-sort)",
-            action='store_true')
-    parser.add_argument('-c', '--color',
-            help="toggle output colors (default: %s)" % bool(pygments),
-            action='store_const', default=bool(pygments),
-            const=(not bool(pygments)))
+    key_group.add_argument(
+        "-a",
+        "--all",
+        help="show keys which don't have defaults set",
+        action="store_true",
+    )
+    key_group.add_argument(
+        "-k",
+        "--only-keys",
+        help="show a list of discovered keys without values",
+        action="store_true",
+    )
+    parser.add_argument(
+        "-n",
+        "--natural-sort",
+        help="sort by filename and line (default: alphabetical by key)",
+        action="store_true",
+    )
+    parser.add_argument(
+        "-s",
+        "--source",
+        help="show source annotations (implies --natural-sort)",
+        action="store_true",
+    )
+    parser.add_argument(
+        "-c",
+        "--color",
+        help="toggle output colors (default: %s)" % bool(pygments),
+        action="store_const",
+        default=bool(pygments),
+        const=(not bool(pygments)),
+    )
     args = parser.parse_args()
 
     if args.color and not pygments:
-        _error("Pygments is required for color output.\n"
-                "    pip install pygments")
+        _error("Pygments is required for color output.\n    pip install pygments")
 
     if args.module:
         _handle_module(args)
@@ -74,8 +98,9 @@ class Unparseable(object):
     easily parsed - e.g. was not a basic type.
 
     """
+
     def __repr__(self):
-        return '<unparsed>'
+        return "<unparsed>"
 
 
 class NotSet(object):
@@ -83,8 +108,9 @@ class NotSet(object):
     This class represents a default value which is not set.
 
     """
+
     def __repr__(self):
-        return '<not set>'
+        return "<not set>"
 
 
 class _PyconfigCall(object):
@@ -101,6 +127,7 @@ class _PyconfigCall(object):
     :type source: tuple
 
     """
+
     def __init__(self, method, key, default, source):
         self.method = method
         self.key = key
@@ -117,7 +144,7 @@ class _PyconfigCall(object):
         """
         key = self.key
         if namespace and key.startswith(namespace):
-            key = key[len(namespace) + 1:]
+            key = key[len(namespace) + 1 :]
 
         return "%s = %s" % (self.get_key(), self._default() or NotSet())
 
@@ -141,7 +168,7 @@ class _PyconfigCall(object):
 
         """
         default = self._default()
-        default = ', ' + default if default else ''
+        default = ", " + default if default else ""
         return "pyconfig.%s(%r%s)" % (self.method, self.get_key(), default)
 
     def annotation(self):
@@ -161,8 +188,8 @@ class _PyconfigCall(object):
         if not isinstance(self.key, Unparseable):
             return self.key
 
-        line = self.source[self.col_offset:]
-        regex = re.compile('''pyconfig\.[eginst]+\(([^,]+).*?\)''')
+        line = self.source[self.col_offset :]
+        regex = re.compile("""pyconfig\.[eginst]+\(([^,]+).*?\)""")
         match = regex.match(line)
         if not match:
             return Unparseable()
@@ -174,8 +201,8 @@ class _PyconfigCall(object):
         Return the source line stripped down to just the pyconfig call.
 
         """
-        line = self.source[self.col_offset:]
-        regex = re.compile('''(pyconfig\.[eginst]+\(['"][^)]+?['"].*?\))''')
+        line = self.source[self.col_offset :]
+        regex = re.compile("""(pyconfig\.[eginst]+\(['"][^)]+?['"].*?\))""")
         match = regex.match(line)
         if not match:
             # Fuck it, return the whole line
@@ -188,11 +215,11 @@ class _PyconfigCall(object):
         Return only the default value, if there is one.
 
         """
-        line = self.source[self.col_offset:]
-        regex = re.compile('''pyconfig\.[eginst]+\(['"][^)]+?['"], ?(.*?)\)''')
+        line = self.source[self.col_offset :]
+        regex = re.compile("""pyconfig\.[eginst]+\(['"][^)]+?['"], ?(.*?)\)""")
         match = regex.match(line)
         if not match:
-            return ''
+            return ""
 
         return match.group(1)
 
@@ -215,7 +242,7 @@ class _PyconfigCall(object):
                 if default:
                     return default
         # Otherwise just make it a string and go
-        return ', '.join(str(v) for v in self.default)
+        return ", ".join(str(v) for v in self.default)
 
     def __repr__(self):
         return self.as_call()
@@ -273,8 +300,8 @@ def _get_module_filename(module):
 
     """
     # Split up the module and its containing package, if it has one
-    module = module.split('.')
-    package = '.'.join(module[:-1])
+    module = module.split(".")
+    package = ".".join(module[:-1])
     module = module[-1]
 
     try:
@@ -288,20 +315,20 @@ def _get_module_filename(module):
             # Get the module from that package
             module = getattr(package, module, None)
 
-        filename = getattr(module, '__file__', None)
+        filename = getattr(module, "__file__", None)
         if not filename:
             # No filename? Nothing to do here
             return Unparseable()
 
         # If we get a .pyc, strip the c to get .py so we can parse the source
-        if filename.endswith('.pyc'):
+        if filename.endswith(".pyc"):
             filename = filename[:-1]
             if not os.path.exists(filename) and os.path.isfile(filename):
                 # If there's only a .pyc and no .py it's a compile package or
                 # egg and we can't get at the source for parsing
                 return Unparseable()
         # If we have a package, we want the directory not the init file
-        if filename.endswith('__init__.py'):
+        if filename.endswith("__init__.py"):
             filename = filename[:-11]
 
         # Yey, we found it
@@ -348,7 +375,7 @@ def _parse_and_output(filename, args):
         for key, value in conf.settings.items():
             if key in keys:
                 continue
-            calls.append(_PyconfigCall('set', key, value, [None]*4))
+            calls.append(_PyconfigCall("set", key, value, [None] * 4))
 
     _output(calls, args)
 
@@ -380,10 +407,10 @@ def _output(calls, args):
             out.append(_format_call(call, args))
             keys.add(call.key)
 
-        out = '\n'.join(out)
+        out = "\n".join(out)
         if args.color:
             out = _colorize(out)
-        print(out, end=' ')
+        print(out, end=" ")
 
         # We're done here
         return
@@ -400,10 +427,10 @@ def _output(calls, args):
             continue
         out.append(_format_call(call, args))
 
-    out = '\n'.join(out)
+    out = "\n".join(out)
     if args.color:
         out = _colorize(out)
-    print(out, end=' ')
+    print(out, end=" ")
 
 
 def _format_call(call, args):
@@ -415,9 +442,9 @@ def _format_call(call, args):
     :type call: :class:`_PyconfigCall`
 
     """
-    out = ''
+    out = ""
     if args.source:
-        out += call.annotation() + '\n'
+        out += call.annotation() + "\n"
 
     if args.only_keys:
         out += call.get_key()
@@ -444,9 +471,11 @@ def _colorize(output):
     # ['monokai', 'manni', 'rrt', 'perldoc', 'borland', 'colorful', 'default',
     # 'murphy', 'vs', 'trac', 'tango', 'fruity', 'autumn', 'bw', 'emacs',
     # 'vim', 'pastie', 'friendly', 'native']
-    return pygments.highlight(output,
-            pygments.lexers.PythonLexer(),
-            pygments.formatters.Terminal256Formatter(style='monokai'))
+    return pygments.highlight(
+        output,
+        pygments.lexers.PythonLexer(),
+        pygments.formatters.Terminal256Formatter(style="monokai"),
+    )
 
 
 def _parse_dir(directory, relpath):
@@ -464,7 +493,7 @@ def _parse_dir(directory, relpath):
     pyconfig_calls = []
     for root, dirs, files in os.walk(directory):
         for filename in files:
-            if not filename.endswith('.py'):
+            if not filename.endswith(".py"):
                 continue
             filename = os.path.join(root, filename)
             pyconfig_calls.extend(_parse_file(filename, relpath))
@@ -482,7 +511,7 @@ def _parse_file(filename, relpath=None):
     :type relpath: str
 
     """
-    with open(filename, 'r') as source:
+    with open(filename, "r") as source:
         source = source.read()
 
     pyconfig_calls = []
@@ -494,19 +523,19 @@ def _parse_file(filename, relpath=None):
 
     # Look for UTF-8 encoding
     first_lines = source[0:200]
-    match = re.match('^#.*coding[:=].?([a-zA-Z0-9-_]+).*', first_lines)
+    match = re.match("^#.*coding[:=].?([a-zA-Z0-9-_]+).*", first_lines)
     if match:
         try:
             coding = match.group(1)
             source = source.decode(coding)
-        except:
+        except Exception:
             print("# Error decoding file, may not parse correctly:", filename)
 
     try:
         # Split the source into lines so we can reference it easily
-        source = source.split('\n')
-    except:
-        print("# Error parsing file, ignoring:", filename);
+        source = source.split("\n")
+    except Exception:
+        print("# Error parsing file, ignoring:", filename)
         return []
 
     # Make the filename relative to the given path, if needed
@@ -524,12 +553,12 @@ def _parse_file(filename, relpath=None):
             # an Attribute node, otherwise skip it
             continue
 
-        if getattr(func.value, 'id', None) != 'pyconfig':
+        if getattr(func.value, "id", None) != "pyconfig":
             # If the Attribute value isn't a Name (doesn't have an `id`) or it
             # isn't 'pyconfig', then we skip
             continue
 
-        if func.attr not in ['get', 'set', 'setting']:
+        if func.attr not in ["get", "set", "setting"]:
             # If the Attribute attr isn't one of the pyconfig API methods, then
             # we skip
             continue
@@ -546,7 +575,7 @@ def _parse_file(filename, relpath=None):
         for arg in call.args[1:]:
             args.append(_map_arg(arg))
 
-        line = (filename, source[call.lineno-1], call.lineno, call.col_offset)
+        line = (filename, source[call.lineno - 1], call.lineno, call.col_offset)
         call = _PyconfigCall(func.attr, args[0], args[1:], line)
         pyconfig_calls.append(call)
 
@@ -565,14 +594,13 @@ def _map_arg(arg):
         return arg.n
     elif isinstance(arg, _ast.Name):
         name = arg.id
-        if name == 'True':
+        if name == "True":
             return True
-        elif name == 'False':
+        elif name == "False":
             return False
-        elif name == 'None':
+        elif name == "None":
             return None
         return name
     else:
         # Everything else we don't bother with
         return Unparseable()
-

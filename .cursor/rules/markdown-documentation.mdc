@@ -1,0 +1,40 @@
+---
+description: Documentation and markdown formatting guidelines
+globs: *.md,**/*.md,README*
+alwaysApply: false
+---
+
+# Documentation Guidelines
+
+@Docs https://github.github.com/gfm/
+
+## Markdown Formatting
+
+- Keep all documentation files properly formatted
+- Run markdown linting before committing documentation changes
+  - ALWAYS use `pre-commit` for linting and formatting
+  - ALWAYS use `pre-commit run [--all-files | --files [FILES ...]] prettier` to ensure markdown files conform to prettier's standards before running markdown lint
+  - ALWAYS use `pre-commit run [--all-files | --files [FILES ...]] markdownlint-cli2` hook for formatting a specific markdown file or all markdown files in the repository
+  - IF AND ONLY IF `pre-commit` is not available as a command, `uv run pre-commit` should be used as a fallback
+-  Use proper markdown formatting:
+  - Add blank lines before and after code blocks
+  - Use proper heading hierarchy
+  - Keep line length reasonable (88 characters)
+  - Use proper list formatting with blank lines between list items
+
+## Documentation Standards
+
+- Keep README.md updated with new features
+- Document any breaking changes
+- Add docstrings to all public APIs
+- Follow the project's markdown style guide
+- Use pre-commit hooks to enforce markdown formatting
+- Check markdown files with `markdownlint-cli2` before committing
+
+## Content Guidelines
+
+- Write clear, concise documentation
+- Include code examples where helpful
+- Keep documentation up to date with code changes
+- Use consistent terminology throughout
+- Provide installation and usage instructions

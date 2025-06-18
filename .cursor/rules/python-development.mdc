@@ -1,0 +1,65 @@
+---
+description: Core Python development guidelines for pyconfig project
+globs: *.py,**/*.py
+alwaysApply: false
+---
+
+# Python Development Guidelines
+
+## Running Python commands
+
+- All commands are managed with `uv` and should use `uv run`
+    - NEVER try to run commands with `python -m` directly, always use `uv run` or `uv run python -m`
+    - ALWAYS prefer invoking commands directly like `uv run pytest` rather than the module like `uv run python -m pytest`
+
+## Code Style & Formatting
+
+- Python projects are formatted using `ruff`
+  - Ruff formatter documentation <https://docs.astral.sh/ruff/formatter/>
+  - Files can be auto formatted using `uv run ruff format [OPTIONS] [FILES]...`
+- ALWAYS use type hints for all function parameters and return values
+- ALWAYS create an appropriate docstring for functions, classes, and modules following Google style
+  - ALWAYS describe possible edge cases, errors, and conditionals that materially affect the behavior of the documented code
+- Follow PEP 8 standards
+- Prefer descriptive variable and function names
+- Keep line length to 88 characters (Black formatter default)
+
+## Project Structure
+
+- This project uses `uv` for dependency management
+- Tests should be placed in the `tests/` directory with matching structure to the project codebase
+- Use `pytest` for all testing
+    - ALWAYS use the format `uv run pytest [options] [file_or_dir] [file_or_dir] [...]` when running tests
+    - NEVER try to run `python -m pytest`
+    - Pytest documentation <https://docs.pytest.org/en/stable/how-to/usage.html>
+- Follow the existing project structure when adding new modules
+
+## Dependencies & Imports
+
+- Use uv to manage dependencies via `pyproject.toml`
+    - Use appropriate `--group` arguments to `uv add` when adding dependencies so we don't add main package dependencies unnecessarily
+        - The default groups should be "dev" and "docs", with other specific groups created only by the user
+- Group imports: standard library, third-party, local imports
+- Use absolute imports when possible
+- Avoid circular imports
+
+## Error Handling
+
+- Use specific exception types rather than bare `except:`
+- Provide meaningful error messages
+- Handle edge cases gracefully
+- Use logging instead of print statements for debugging
+
+## Performance & Best Practices
+
+- Prefer list comprehensions over loops where readable
+- Use context managers for resource management
+- Avoid premature optimization but be mindful of performance
+
+## AI Assistant Instructions
+
+- Always suggest type hints when they're missing
+- Recommend tests when implementing new functionality
+- Point out potential security issues or edge cases
+- Suggest more Pythonic approaches when applicable
+- Consider backwards compatibility when making changes
