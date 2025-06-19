@@ -12,21 +12,17 @@ import runpy
 import sys
 import threading
 
-try:
-
-    def iter_entry_points(group, **kwargs):
-        from importlib.metadata import entry_points
-
-        for entry_point in entry_points(group=group, **kwargs):
-            yield entry_point
-except ImportError:
-    try:
-        from pkg_resources import iter_entry_points
-    except ImportError:
-        raise ImportError("No module named 'importlib.metadata' or 'pkg_resources'")
-
 import pytool
 from pytool.lang import Namespace
+
+
+def iter_entry_points(group, **kwargs):
+    """Iterate over entry points for the given group using importlib.metadata."""
+    from importlib.metadata import entry_points
+
+    for entry_point in entry_points(group=group, **kwargs):
+        yield entry_point
+
 
 __version__ = "3.2.3"
 
