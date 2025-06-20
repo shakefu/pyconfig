@@ -1,6 +1,6 @@
 [project]
 name = "pyconfig"
-version = "3.2.3"
+version = "1.0.0"
 description = "Python-based singleton configuration"
 readme = "README.md"
 license = "MIT"
