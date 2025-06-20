@@ -13,9 +13,11 @@ dependencies = [
     "simplejson >=3.19.2, <4.0.0",
 ]
 
+[project.scripts]
+pyconfig = "pyconfig.scripts:main"
+
 [dependency-groups]
 etcd = [
-    # "python-etcd",
     "python-etcd>=0.4.5",
 ]
 dev = [
