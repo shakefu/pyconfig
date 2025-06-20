@@ -46,3 +46,6 @@ docs/_output
 
 # Cursor
 .cursorrules
+
+# VSCode
+.vscode
