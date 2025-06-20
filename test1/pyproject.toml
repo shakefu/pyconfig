@@ -1,0 +1,20 @@
+[project]
+name = "test1"
+version = "1.0.0"
+description = "Test package for pyconfig"
+readme = "README.md"
+license = "MIT"
+authors = [
+    {name = "Jacob Alheid", email = "shakefu@gmail.com"},
+]
+requires-python = ">=3.8"
+dependencies = [
+    "pyconfig",
+]
+
+[project.entry-points.pyconfig]
+any = "test1"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
