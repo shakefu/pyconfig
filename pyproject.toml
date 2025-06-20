@@ -36,3 +36,9 @@ docs = [
 # This is required so setuptools doesn't see "script" as a package
 [tool.setuptools]
 packages = ["pyconfig"]
+
+[tool.pytest.ini_options]
+addopts = "--cov --cov-report term-missing"
+
+[tool.coverage.run]
+source = ["pyconfig"]

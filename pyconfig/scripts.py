@@ -18,12 +18,11 @@ except ImportError:
     pygments = None
 
 
-def main():
-    """
-    Main script for `pyconfig` command.
-
-    """
-    parser = argparse.ArgumentParser(description="Helper for working with pyconfigs")
+def _create_parser(pygments_available):
+    """Creates the argument parser for the script."""
+    parser = argparse.ArgumentParser(
+        description="Helper for working with pyconfigs", prog="pyconfig"
+    )
     target_group = parser.add_mutually_exclusive_group()
     target_group.add_argument(
         "-f", "--filename", help="parse an individual file or directory", metavar="F"
@@ -74,12 +73,21 @@ def main():
     parser.add_argument(
         "-c",
         "--color",
-        help="toggle output colors (default: %s)" % bool(pygments),
+        help="toggle output colors (default: %s)" % pygments_available,
         action="store_const",
-        default=bool(pygments),
-        const=(not bool(pygments)),
+        default=pygments_available,
+        const=(not pygments_available),
     )
-    args = parser.parse_args()
+    return parser
+
+
+def main(argv=None):
+    """
+    Main script for `pyconfig` command.
+
+    """
+    parser = _create_parser(bool(pygments))
+    args = parser.parse_args(argv)
 
     if args.color and not pygments:
         _error("Pygments is required for color output.\n    pip install pygments")
@@ -141,11 +149,11 @@ class _PyconfigCall(object):
         :attr:`key`, then that section of the key will be removed.
 
         """
-        key = self.key
-        if namespace and key.startswith(namespace):
+        key = self.get_key()
+        if namespace and isinstance(key, str) and key.startswith(namespace + "."):
             key = key[len(namespace) + 1 :]
 
-        return "%s = %s" % (self.get_key(), self._default() or NotSet())
+        return "%s = %s" % (key, self._default() or NotSet())
 
     def as_live(self):
         """
@@ -231,6 +239,8 @@ class _PyconfigCall(object):
             # Check if it's iterable
             iter(self.default)
         except TypeError:
+            if self.default is None:
+                return ""
             return repr(self.default)
 
         # This is to look for unparsable values, and if we find one, we try to
@@ -241,7 +251,7 @@ class _PyconfigCall(object):
                 if default:
                     return default
         # Otherwise just make it a string and go
-        return ", ".join(str(v) for v in self.default)
+        return ", ".join(repr(v) for v in self.default)
 
     def __repr__(self):
         return self.as_call()
@@ -588,10 +598,7 @@ def _map_arg(arg):
     """
     # Python 3.8+ uses ast.Constant for literals
     if isinstance(arg, ast.Constant):
-        if isinstance(arg.value, str):
-            return repr(arg.value)
-        else:
-            return arg.value
+        return arg.value
     elif isinstance(arg, ast.Name):
         name = arg.id
         if name == "True":
