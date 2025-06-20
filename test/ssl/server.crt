@@ -23,15 +23,15 @@ Certificate:
                     18:72:34:89:36:c2:44:74:9d
                 Exponent: 65537 (0x10001)
         X509v3 extensions:
-            X509v3 Basic Constraints: 
+            X509v3 Basic Constraints:
                 CA:FALSE
-            Netscape Cert Type: 
+            Netscape Cert Type:
                 SSL Server
-            X509v3 Key Usage: 
+            X509v3 Key Usage:
                 Digital Signature, Key Encipherment
-            X509v3 Subject Alternative Name: 
+            X509v3 Subject Alternative Name:
                 IP Address:127.0.0.1
-            Netscape Comment: 
+            Netscape Comment:
                 OpenSSL Certificate for SSL Server
     Signature Algorithm: sha1WithRSAEncryption
         7d:6a:21:00:19:e8:6d:2b:c8:60:e9:23:2b:49:89:89:9d:4d:
