@@ -1,4 +1,3 @@
-import _ast
 import argparse
 import ast
 import os
@@ -189,7 +188,7 @@ class _PyconfigCall(object):
             return self.key
 
         line = self.source[self.col_offset :]
-        regex = re.compile("""pyconfig\.[eginst]+\(([^,]+).*?\)""")
+        regex = re.compile(r"""pyconfig\.[eginst]+\(([^,]+).*?\)""")
         match = regex.match(line)
         if not match:
             return Unparseable()
@@ -202,7 +201,7 @@ class _PyconfigCall(object):
 
         """
         line = self.source[self.col_offset :]
-        regex = re.compile("""(pyconfig\.[eginst]+\(['"][^)]+?['"].*?\))""")
+        regex = re.compile(r"""(pyconfig\.[eginst]+\(['"][^)]+?['"].*?\))""")
         match = regex.match(line)
         if not match:
             # Fuck it, return the whole line
@@ -216,7 +215,7 @@ class _PyconfigCall(object):
 
         """
         line = self.source[self.col_offset :]
-        regex = re.compile("""pyconfig\.[eginst]+\(['"][^)]+?['"], ?(.*?)\)""")
+        regex = re.compile(r"""pyconfig\.[eginst]+\(['"][^)]+?['"], ?(.*?)\)""")
         match = regex.match(line)
         if not match:
             return ""
@@ -543,12 +542,12 @@ def _parse_file(filename, relpath=None):
         filename = os.path.relpath(filename, relpath)
 
     for call in ast.walk(nodes):
-        if not isinstance(call, _ast.Call):
+        if not isinstance(call, ast.Call):
             # Skip any node that isn't a Call
             continue
 
         func = call.func
-        if not isinstance(call.func, _ast.Attribute):
+        if not isinstance(call.func, ast.Attribute):
             # We're looking for calls to pyconfig.*, so the function has to be
             # an Attribute node, otherwise skip it
             continue
@@ -567,8 +566,8 @@ def _parse_file(filename, relpath=None):
         args = []
         if call.args:
             arg = call.args[0]
-            if isinstance(arg, _ast.Str):
-                args.append(arg.s)
+            if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+                args.append(arg.value)
             else:
                 args.append(_map_arg(arg))
 
@@ -587,12 +586,13 @@ def _map_arg(arg):
     Return `arg` appropriately parsed or mapped to a usable value.
 
     """
-    # Grab the easy to parse values
-    if isinstance(arg, _ast.Str):
-        return repr(arg.s)
-    elif isinstance(arg, _ast.Num):
-        return arg.n
-    elif isinstance(arg, _ast.Name):
+    # Python 3.8+ uses ast.Constant for literals
+    if isinstance(arg, ast.Constant):
+        if isinstance(arg.value, str):
+            return repr(arg.value)
+        else:
+            return arg.value
+    elif isinstance(arg, ast.Name):
         name = arg.id
         if name == "True":
             return True
