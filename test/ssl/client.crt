@@ -23,15 +23,15 @@ Certificate:
                     df:a8:ab:8d:75:b6:25:ea:8d
                 Exponent: 65537 (0x10001)
         X509v3 extensions:
-            X509v3 Basic Constraints: 
+            X509v3 Basic Constraints:
                 CA:FALSE
-            Netscape Cert Type: 
+            Netscape Cert Type:
                 SSL Client
-            X509v3 Key Usage: 
+            X509v3 Key Usage:
                 Digital Signature, Key Encipherment
-            X509v3 Extended Key Usage: 
+            X509v3 Extended Key Usage:
                 TLS Web Client Authentication
-            Netscape Comment: 
+            Netscape Comment:
                 OpenSSL Certificate for SSL Client
     Signature Algorithm: sha1WithRSAEncryption
         42:a0:2a:1a:5d:67:db:8b:a1:d6:94:c1:77:ec:c9:18:00:a4:

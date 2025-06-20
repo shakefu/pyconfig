@@ -18,13 +18,34 @@ pip-log.txt
 
 # Unit test / coverage reports
 .coverage
+.coverage.*
+coverage.xml
+htmlcov/
 .tox
+.nox
+.cache
+.pytest_cache/
+.hypothesis/
+*.cover
+*.py,cover
+.coverage_html/
+.pytest_cache
 
-#Translations
+# Translations
 *.mo
 
-#Mr Developer
+# Mr Developer
 .mr.developer.cfg
 
-# Pyconfig
-localconfig.py
+# Vim
+*.swp
+
+# Sphinx
+docs/_build
+docs/_output
+
+# Cursor
+.cursorrules
+
+# VSCode
+.vscode

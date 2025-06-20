@@ -3,68 +3,68 @@ Pyconfig
 ========
 
 """
-from __future__ import print_function
-import os
-import sys
-import runpy
-import logging
-import threading
-try:
-    def iter_entry_points(group, **kwargs):
-        from importlib.metadata import entry_points
-        for entry_point in entry_points(group=group, **kwargs):
-            yield entry_point
-except ImportError:
-    try:
-        from pkg_resources import iter_entry_points
-    except ImportError:
-        raise ImportError("No module named 'importlib.metadata' or 'pkg_resources'")
 
-import six
+from __future__ import print_function
+
+import logging
+import os
+import runpy
+import sys
+import threading
+
 import pytool
 from pytool.lang import Namespace
 
 
-__version__ = '3.2.3'
+def iter_entry_points(group, **kwargs):
+    """Iterate over entry points for the given group using importlib.metadata."""
+    from importlib.metadata import entry_points
+
+    for entry_point in entry_points(group=group, **kwargs):
+        yield entry_point
+
+
+__version__ = "3.2.3"
 
 
 log = logging.getLogger(__name__)
 
 
 class Setting(object):
-    """ Setting descriptor. Allows class property style access of setting
-        values that are always up to date.
+    """Setting descriptor. Allows class property style access of setting
+    values that are always up to date.
 
-        If it is set with `allow_default` as `False`, calling the
-        attribute when its value is not set will raise a :exc:`LookupError`
+    If it is set with `allow_default` as `False`, calling the
+    attribute when its value is not set will raise a :exc:`LookupError`
 
-        :param str name: Setting key name
-        :param default: default value of setting.  Defaults to None.
-        :param bool allow_default: If true, use the parameter default as
-                        default if the key is not set, else raise
-                        :exc:`LookupError`
+    :param str name: Setting key name
+    :param default: default value of setting.  Defaults to None.
+    :param bool allow_default: If true, use the parameter default as
+                    default if the key is not set, else raise
+                    :exc:`LookupError`
     """
+
     def __init__(self, name, default=None, allow_default=True):
         self.name = name
         self.default = default
         self.allow_default = allow_default
 
     def __get__(self, instance, owner):
-        return Config().get(self.name, self.default,
-                            allow_default=self.allow_default)
+        return Config().get(self.name, self.default, allow_default=self.allow_default)
 
 
 class Config(object):
-    """ Singleton configuration object that ensures consistent and up to date
-        setting values.
+    """Singleton configuration object that ensures consistent and up to date
+    setting values.
 
     """
+
     _self = dict(
-            _init=False,
-            settings={},
-            reload_hooks=[],
-            mut_lock=threading.RLock(),
-            )
+        _init=False,
+        settings={},
+        reload_hooks=[],
+        mut_lock=threading.RLock(),
+    )
 
     def __init__(self):
         # Use a borg singleton
@@ -76,16 +76,16 @@ class Config(object):
             self.load()
 
     def set(self, name, value):
-        """ Changes a setting value.
+        """Changes a setting value.
 
-            This implements a locking mechanism to ensure some level of thread
-            safety.
+        This implements a locking mechanism to ensure some level of thread
+        safety.
 
-            :param str name: Setting key name.
-            :param value: Setting value.
+        :param str name: Setting key name.
+        :param value: Setting value.
 
         """
-        if not self.settings.get('pyconfig.case_sensitive', False):
+        if not self.settings.get("pyconfig.case_sensitive", False):
             name = name.lower()
         log.info("    %s = %s", name, repr(value))
 
@@ -94,15 +94,15 @@ class Config(object):
             self.settings[name] = value
 
     def _update(self, conf_dict, base_name=None):
-        """ Updates the current configuration with the values in `conf_dict`.
+        """Updates the current configuration with the values in `conf_dict`.
 
-            :param dict conf_dict: Dictionary of key value settings.
-            :param str base_name: Base namespace for setting keys.
+        :param dict conf_dict: Dictionary of key value settings.
+        :param str base_name: Base namespace for setting keys.
 
         """
         for name in conf_dict:
             # Skip private names
-            if name.startswith('_'):
+            if name.startswith("_"):
                 continue
             value = conf_dict[name]
             # Skip Namespace if it's imported
@@ -110,7 +110,7 @@ class Config(object):
                 continue
             # Use a base namespace
             if base_name:
-                name = base_name + '.' + name
+                name = base_name + "." + name
             if isinstance(value, Namespace):
                 for name, value in value.iteritems(name):
                     self.set(name, value)
@@ -139,20 +139,20 @@ class Config(object):
         defer = []
 
         # Load all config plugins
-        for conf in iter_entry_points('pyconfig'):
+        for conf in iter_entry_points("pyconfig"):
             if conf.attrs:
                 raise RuntimeError("config must be a module")
 
             mod_name = conf.module_name
-            base_name = conf.name if conf.name != 'any' else None
+            base_name = conf.name if conf.name != "any" else None
 
             log.info("Loading module '%s'", mod_name)
             mod_dict = runpy.run_module(mod_name)
 
             # If this module wants to be deferred, save it for later
-            if mod_dict.get('deferred', None) is deferred:
+            if mod_dict.get("deferred", None) is deferred:
                 log.info("Deferring module '%s'", mod_name)
-                mod_dict.pop('deferred')
+                mod_dict.pop("deferred")
                 defer.append((mod_name, base_name, mod_dict))
                 continue
 
@@ -172,22 +172,23 @@ class Config(object):
         # Allow localconfig overrides
         mod_dict = None
         try:
-            mod_dict = runpy.run_module('localconfig')
+            mod_dict = runpy.run_module("localconfig")
         except ImportError:
             pass
         except ValueError as err:
-            if getattr(err, 'message') != '__package__ set to non-string':
+            if getattr(err, "message") != "__package__ set to non-string":
                 raise
 
             # This is a bad work-around to make this work transparently...
             # shouldn't really access core stuff like this, but Fuck It[tm]
-            mod_name = 'localconfig'
+            mod_name = "localconfig"
             if sys.version_info < (2, 7):
                 loader, code, fname = runpy._get_module_details(mod_name)
             else:
                 _, loader, code, fname = runpy._get_module_details(mod_name)
-            mod_dict = runpy._run_code(code, {}, {}, mod_name, fname, loader,
-                    pkg_name=None)
+            mod_dict = runpy._run_code(
+                code, {}, {}, mod_name, fname, loader, pkg_name=None
+            )
 
         if mod_dict:
             log.info("Loading module 'localconfig'")
@@ -196,24 +197,24 @@ class Config(object):
         self.call_reload_hooks()
 
     def call_reload_hooks(self):
-        """ Calls all the reload hooks that are registered. """
+        """Calls all the reload hooks that are registered."""
         # Call all registered reload hooks
         for hook in self.reload_hooks:
             hook()
 
     def get(self, name, default, allow_default=True):
-        """ Return a setting value.
+        """Return a setting value.
 
-            :param str name: Setting key name.
-            :param default: Default value of setting if it's not explicitly
-                            set.
-            :param bool allow_default: If true, use the parameter default as
-                            default if the key is not set, else raise
-                            :exc:`LookupError`
-            :raises: :exc:`LookupError` if allow_default is false and the setting is
-                     not set.
+        :param str name: Setting key name.
+        :param default: Default value of setting if it's not explicitly
+                        set.
+        :param bool allow_default: If true, use the parameter default as
+                        default if the key is not set, else raise
+                        :exc:`LookupError`
+        :raises: :exc:`LookupError` if allow_default is false and the setting is
+                 not set.
         """
-        if not self.settings.get('pyconfig.case_sensitive', False):
+        if not self.settings.get("pyconfig.case_sensitive", False):
             name = name.lower()
         if name not in self.settings:
             if not allow_default:
@@ -222,63 +223,64 @@ class Config(object):
         return self.settings[name]
 
     def reload(self, clear=False):
-        """ Reloads the configuration. """
+        """Reloads the configuration."""
         log.info("Reloading config.")
         self.load(clear)
 
     def add_reload_hook(self, hook):
-        """ Registers a reload hook that's called when :meth:`load` is called.
+        """Registers a reload hook that's called when :meth:`load` is called.
 
-            :param function hook: Hook to register.
+        :param function hook: Hook to register.
 
         """
         self.reload_hooks.append(hook)
 
     def clear(self):
-        """ Clears all the cached configuration. """
+        """Clears all the cached configuration."""
         self.settings = {}
 
+
 def reload(clear=False):
-    """ Shortcut method for calling reload. """
+    """Shortcut method for calling reload."""
     Config().reload(clear)
 
 
 def setting(name, default=None, allow_default=True):
-    """ Shortcut method for getting a setting descriptor.
+    """Shortcut method for getting a setting descriptor.
 
-        See :class:`pyconfig.Setting` for details.
+    See :class:`pyconfig.Setting` for details.
     """
     return Setting(name, default, allow_default)
 
 
 def get(name, default=None, allow_default=True):
-    """ Shortcut method for getting a setting value.
+    """Shortcut method for getting a setting value.
 
-        :param str name: Setting key name.
-        :param default: Default value of setting if it's not explicitly
-                        set. Defaults to `None`
-        :param bool allow_default: If true, use the parameter default as
-                        default if the key is not set, else raise
-                        :exc:`KeyError`.  Defaults to `None`
-        :raises: :exc:`KeyError` if allow_default is false and the setting is
-                 not set.
+    :param str name: Setting key name.
+    :param default: Default value of setting if it's not explicitly
+                    set. Defaults to `None`
+    :param bool allow_default: If true, use the parameter default as
+                    default if the key is not set, else raise
+                    :exc:`KeyError`.  Defaults to `None`
+    :raises: :exc:`KeyError` if allow_default is false and the setting is
+             not set.
     """
     return Config().get(name, default, allow_default=allow_default)
 
 
 def set(name, value):
-    """ Shortcut method to change a setting. """
+    """Shortcut method to change a setting."""
     Config().set(name, value)
 
 
 def reload_hook(func):
-    """ Decorator for registering a reload hook. """
+    """Decorator for registering a reload hook."""
     Config().add_reload_hook(func)
     return func
 
 
 def clear():
-    """ Shortcut for clearing all settings. """
+    """Shortcut for clearing all settings."""
     Config().clear()
 
 
@@ -310,29 +312,31 @@ class etcd(object):
     Singleton for the etcd client and helper methods.
 
     """
+
     _self = dict(
-            _init=False,
-            client=None,
-            module=None,
-            watcher=None,
-            )
+        _init=False,
+        client=None,
+        module=None,
+        watcher=None,
+    )
 
     def __init__(self, *args, **kwargs):
         # Use a borg singleton
         self.__dict__ = self._self
 
         # Get config settings
-        self.prefix = kwargs.pop('prefix', env('PYCONFIG_ETCD_PREFIX', None))
-        self.case_sensitive = get('pyconfig.case_sensitive', False)
+        self.prefix = kwargs.pop("prefix", env("PYCONFIG_ETCD_PREFIX", None))
+        self.case_sensitive = get("pyconfig.case_sensitive", False)
         # Get inheritance settings
         # XXX shakefu: These might need env vars at some point
-        self.inherit = kwargs.pop('inherit', True)
-        self.inherit_key = kwargs.pop('inherit_key', 'config.inherit')
-        self.inherit_depth = kwargs.pop('inherit_depth',
-                env('PYCONFIG_INHERIT_DEPTH', 2))
+        self.inherit = kwargs.pop("inherit", True)
+        self.inherit_key = kwargs.pop("inherit_key", "config.inherit")
+        self.inherit_depth = kwargs.pop(
+            "inherit_depth", env("PYCONFIG_INHERIT_DEPTH", 2)
+        )
 
         # See if we should watch for changes
-        self.watching = kwargs.pop('watch', env('PYCONFIG_ETCD_WATCH', False))
+        self.watching = kwargs.pop("watch", env("PYCONFIG_ETCD_WATCH", False))
 
         # Only load the client the first time
         if not self._init:
@@ -361,6 +365,7 @@ class etcd(object):
         # Try to get the etcd module
         try:
             import etcd
+
             self.module = etcd
         except ImportError:
             pass
@@ -371,19 +376,19 @@ class etcd(object):
         self._parse_jetconfig()
 
         # Check env for overriding configuration or pyconfig setting
-        hosts = env('PYCONFIG_ETCD_HOSTS', hosts)
-        protocol = env('PYCONFIG_ETCD_PROTOCOL', None)
-        cacert = env('PYCONFIG_ETCD_CACERT', cacert)
-        client_cert = env('PYCONFIG_ETCD_CERT', client_cert)
-        client_key = env('PYCONFIG_ETCD_KEY', client_key)
+        hosts = env("PYCONFIG_ETCD_HOSTS", hosts)
+        protocol = env("PYCONFIG_ETCD_PROTOCOL", None)
+        cacert = env("PYCONFIG_ETCD_CACERT", cacert)
+        client_cert = env("PYCONFIG_ETCD_CERT", client_cert)
+        client_key = env("PYCONFIG_ETCD_KEY", client_key)
 
         # Parse auth string if there is one
         username = None
         password = None
-        auth = env('PYCONFIG_ETCD_AUTH', None)
+        auth = env("PYCONFIG_ETCD_AUTH", None)
         if auth:
-            auth = auth.split(':')
-            auth.append('')
+            auth = auth.split(":")
+            auth.append("")
             username = auth[0]
             password = auth[1]
 
@@ -395,28 +400,27 @@ class etcd(object):
         kw = {}
         # Need this when passing a list of hosts to python-etcd, which we
         # always do, even if it's a list of one
-        kw['allow_reconnect'] = True
+        kw["allow_reconnect"] = True
 
         # Grab optional protocol argument
         if protocol:
-            kw['protocol'] = protocol
+            kw["protocol"] = protocol
 
         # Add auth to constructor if we got it
         if username:
-            kw['username'] = username
+            kw["username"] = username
         if password:
-            kw['password'] = password
+            kw["password"] = password
 
         # Assign the SSL args if we have 'em
         if cacert:
-            kw['ca_cert'] = os.path.abspath(cacert)
+            kw["ca_cert"] = os.path.abspath(cacert)
         if client_cert and client_key:
-            kw['cert'] = ((os.path.abspath(client_cert),
-                os.path.abspath(client_key)))
+            kw["cert"] = (os.path.abspath(client_cert), os.path.abspath(client_key))
         elif client_cert:
-            kw['cert'] = os.path.abspath(client_cert)
+            kw["cert"] = os.path.abspath(client_cert)
         if cacert or client_cert or client_key:
-            kw['protocol'] = 'https'
+            kw["protocol"] = "https"
 
         self.client = self.module.Client(hosts, **kw)
 
@@ -426,7 +430,7 @@ class etcd(object):
 
         """
         prefix = prefix or self.prefix
-        prefix = '/' + prefix.strip('/') + '/'
+        prefix = "/" + prefix.strip("/") + "/"
         if depth is None:
             depth = self.inherit_depth
 
@@ -455,7 +459,7 @@ class etcd(object):
             # Try to parse them as JSON strings, just in case it works
             try:
                 value = pytool.json.from_json(value)
-            except:
+            except Exception:
                 pass
 
             # Make the key lower-case if we're not case-sensitive
@@ -464,14 +468,15 @@ class etcd(object):
 
             # Strip off the prefix that we're using
             if key.startswith(prefix):
-                key = key[len(prefix):]
+                key = key[len(prefix) :]
 
             # Store the key/value to update the config
             update[key] = value
 
         # Access cached settings directly to avoid recursion
-        inherited = Config().settings.get(self.inherit_key,
-                update.get(self.inherit_key, None))
+        inherited = Config().settings.get(
+            self.inherit_key, update.get(self.inherit_key, None)
+        )
         if depth > 0 and inherited:
             log.info("    ... inheriting ...")
             inherited = self.load(inherited, depth - 1) or {}
@@ -490,7 +495,7 @@ class etcd(object):
         return self.client.eternal_watch(self.prefix, recursive=True)
 
     def start_watching(self):
-        """ Begins watching etcd for changes. """
+        """Begins watching etcd for changes."""
         # Don't create a new watcher thread if we already have one running
         if self.watcher and self.watcher.is_alive():
             return
@@ -511,11 +516,11 @@ class etcd(object):
             return
 
         # If it's a string, we allow comma separated strings
-        if isinstance(hosts, six.string_types):
+        if isinstance(hosts, str):
             # Split comma-separated list
-            hosts = [host.strip() for host in hosts.split(',')]
+            hosts = [host.strip() for host in hosts.split(",")]
             # Split host and port
-            hosts = [host.split(':') for host in hosts]
+            hosts = [host.split(":") for host in hosts]
             # Coerce ports to int
             hosts = [(host[0], int(host[1])) for host in hosts]
 
@@ -528,49 +533,51 @@ class etcd(object):
         (https://github.com/shakefu/jetconfig) that is very sloppy.
 
         """
-        conf = env('JETCONFIG_ETCD', None)
+        conf = env("JETCONFIG_ETCD", None)
 
         if not conf:
             return
 
-        import urlparse
+        from urllib.parse import urlparse
 
         auth = None
         port = None
-        conf = conf.split(',').pop()
-        entry = urlparse.urlparse(conf)
+        conf = conf.split(",").pop()
+        entry = urlparse(conf)
         scheme = entry.scheme
-        host = entry.netloc or entry.path # Path is where it goes if there's no
-                                          # scheme on the URL
+        host = entry.netloc or entry.path  # Path is where it goes if there's no
+        # scheme on the URL
 
-        if '@' in host:
-            auth, host = host.split('@')
+        if "@" in host:
+            auth, host = host.split("@")
 
-        if ':' in host:
-            host, port = host.split(':')
+        if ":" in host:
+            host, port = host.split(":")
 
-        if not port and scheme == 'https':
-            port = '443'
+        if not port and scheme == "https":
+            port = "443"
 
         if scheme:
-            os.environ['PYCONFIG_ETCD_PROTOCOL'] = scheme
+            os.environ["PYCONFIG_ETCD_PROTOCOL"] = scheme
 
         if auth:
-            os.environ['PYCONFIG_ETCD_AUTH'] = auth
+            os.environ["PYCONFIG_ETCD_AUTH"] = auth
 
         if port:
             host = host + ":" + port
 
-        os.environ['PYCONFIG_ETCD_HOSTS'] = host
-
+        os.environ["PYCONFIG_ETCD_HOSTS"] = host
 
     # Getter and setter for the prefix to ensure it stays sync'd with the
     # config and stays normalized
     def _set_prefix(self, prefix):
-        if not prefix: return
-        set('pyconfig.etcd.prefix', '/' + prefix.strip('/') + '/')
+        if not prefix:
+            return
+        set("pyconfig.etcd.prefix", "/" + prefix.strip("/") + "/")
+
     def _get_prefix(self):
-        return '/'+(get('pyconfig.etcd.prefix') or '/config/').strip('/')+'/'
+        return "/" + (get("pyconfig.etcd.prefix") or "/config/").strip("/") + "/"
+
     prefix = property(_get_prefix, _set_prefix)
 
 
@@ -581,6 +588,7 @@ class Watcher(threading.Thread):
     changes.
 
     """
+
     # Ensure this thread doesn't keep the server from exiting
     daemon = True
 
@@ -592,17 +600,17 @@ class Watcher(threading.Thread):
 
         for event in etcd().get_watcher():
             # We ignore all the events except for 'set', which changes them
-            if event.action != 'set':
+            if event.action != "set":
                 continue
 
             # Strip the prefix off the key name
-            key = event.key.replace(etcd().prefix, '', 1)
+            key = event.key.replace(etcd().prefix, "", 1)
 
             # Try to coerce the value from JSON
             value = event.value
             try:
                 value = pytool.json.from_json(value)
-            except:
+            except Exception:
                 pass
 
             # Set the value back to the config
@@ -617,10 +625,10 @@ def env(key, default):
     """
     value = os.environ.get(key, None)
     if value is not None:
-        log.info('    %s = %r', key.lower().replace('_', '.'), value)
+        log.info("    %s = %r", key.lower().replace("_", "."), value)
         return value
 
-    key = key.lower().replace('_', '.')
+    key = key.lower().replace("_", ".")
     value = get(key)
     if value is not None:
         return value
@@ -638,7 +646,5 @@ def env_key(key, default):
         my.database.host => MY_DATABASE_HOST
 
     """
-    env = key.upper().replace('.', '_')
+    env = key.upper().replace(".", "_")
     return os.environ.get(env, default)
-
-
