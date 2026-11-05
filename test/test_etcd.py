@@ -19,13 +19,15 @@ def etcd_setup():
     pyconfig.set("pyconfig.etcd.prefix", "/pyconfig_test/test/")
 
     client = pyconfig.etcd().client
-    client.set("pyconfig_test/test/pyconfig.number", pytool.json.as_json(1))
-    client.set("pyconfig_test/test/pyconfig.boolean", pytool.json.as_json(True))
-    client.set("pyconfig_test/test/pyconfig.string", pytool.json.as_json("Value"))
-    client.set("pyconfig_test/test/pyconfig.json", pytool.json.as_json({"a": "b"}))
-    client.set("pyconfig_test/test2/pyconfig.number", pytool.json.as_json(2))
-    client.set(
-        "pyconfig_test/test2/config.inherit",
+    # Note: keys must include the leading slash, since the etcd3 client does
+    # not normalize key names like the old python-etcd client did
+    client.put("/pyconfig_test/test/pyconfig.number", pytool.json.as_json(1))
+    client.put("/pyconfig_test/test/pyconfig.boolean", pytool.json.as_json(True))
+    client.put("/pyconfig_test/test/pyconfig.string", pytool.json.as_json("Value"))
+    client.put("/pyconfig_test/test/pyconfig.json", pytool.json.as_json({"a": "b"}))
+    client.put("/pyconfig_test/test2/pyconfig.number", pytool.json.as_json(2))
+    client.put(
+        "/pyconfig_test/test2/config.inherit",
         pytool.json.as_json("/pyconfig_test/test/"),
     )
 
@@ -33,12 +35,10 @@ def etcd_setup():
 
     # Clean up the test namespace
     if pyconfig.etcd().configured:
-        pyconfig.etcd().client.delete("pyconfig_test/test", dir=True, recursive=True)
-        pyconfig.etcd().client.delete("pyconfig_test/test2", dir=True, recursive=True)
-        pyconfig.etcd().client.delete(
-            "pyconfig_test/watching", dir=True, recursive=True
-        )
-        pyconfig.etcd().client.delete("pyconfig_test/", dir=True, recursive=True)
+        pyconfig.etcd().client.delete_prefix("/pyconfig_test/test/")
+        pyconfig.etcd().client.delete_prefix("/pyconfig_test/test2/")
+        pyconfig.etcd().client.delete_prefix("/pyconfig_test/watching/")
+        pyconfig.etcd().client.delete_prefix("/pyconfig_test/")
 
 
 @pytest.mark.skipif(
@@ -137,8 +137,8 @@ def test_watching():
     time.sleep(0.020)
 
     # Write a new value directly to etcd
-    pyconfig.etcd().client.write(
-        "pyconfig_test/watching/it.works", pytool.json.as_json(True)
+    pyconfig.etcd().client.put(
+        "/pyconfig_test/watching/it.works", pytool.json.as_json(True)
     )
 
     # Try to get the value... this is a bit sloppy but good luck doing

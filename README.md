@@ -75,10 +75,11 @@ humbledb.write_concern = 1
 
 ### Version added: 3.0.0
 
-Pyconfig has read-only support for configurations stored in etcd. The preferred
-method for configuring Pyconfig to work with etcd is via ENV variables, since
-they must be set as early as possible. It is also possible to use the Python
-API to make Pyconfig work with etcd.
+Pyconfig has read-only support for configurations stored in etcd, using the
+etcd v3 API via the [etcd3](https://pypi.org/project/etcd3/) library. The
+preferred method for configuring Pyconfig to work with etcd is via ENV
+variables, since they must be set as early as possible. It is also possible to
+use the Python API to make Pyconfig work with etcd.
 
 Pyconfig uses a directory namespace to store its dot notation configuration key
 names. By default, that namespace is `/config/`.
@@ -90,7 +91,7 @@ You can set a value with `etcdctl` like:
 
 ```bash
 # The etcdctl command is provided by etcd and not part of pyconfig
-etcdctl set /pyconfig/example/my.setting "from etcd"
+etcdctl put /pyconfig/example/my.setting "from etcd"
 ```
 
 And configure Pyconfig to connect and use that setting:
@@ -112,19 +113,22 @@ at a time in this way.
 - `PYCONFIG_ETCD_PREFIX` - The namespace to prefix settings with (default:
   `'/config/'`)
 - `PYCONFIG_ETCD_HOSTS` - A comma separated list of hosts, like
-  `10.0.0.1:2379,10.0.0.2:2379`
+  `10.0.0.1:2379,10.0.0.2:2379`. Note that the etcd3 client only connects to
+  a single server, so only the first host is used.
 - `PYCONFIG_ETCD_CACERT` - CA cert file to use for SSL
 - `PYCONFIG_ETCD_CERT` - Client cert file to use for SSL client authentication
 - `PYCONFIG_ETCD_KEY` - Client private key file to use for SSL client auth
 - `PYCONFIG_ETCD_WATCH` - If this is set to a truthy value (a non-empty
   string), then pyconfig will keep the local configuration synchronized with
   etcd (_Version added: 3.1.0_)
-- `PYCONFIG_ETCD_PROTOCOL` - Set this to force HTTPS connections even if not
-  using certificates. This should be a string of the form `https` or `http`.
+- `PYCONFIG_ETCD_PROTOCOL` - This should be a string of the form `https` or
+  `http`. Note that the etcd3 client uses TLS implicitly whenever
+  certificates are provided, and cannot force HTTPS without them; if this is
+  set to `https` without any certificates, Pyconfig will log a warning and
+  connect without TLS. (_Version added: 3.2.0_)
+- `PYCONFIG_ETCD_AUTH` - Set this to authenticate with a username and
+  password. This should be a string of the format `username:password`.
   (_Version added: 3.2.0_)
-- `PYCONFIG_ETCD_AUTH` - Set this use Basic Authentication with requests.
-  This should be a string of the format `username:password`. (_Version added:
-  3.2.0_)
 
 **Inheritance:**
 
@@ -139,13 +143,13 @@ set up using `etcdctl` and Pyconfig.
 
 ```bash
 $ # Create the development settings
-$ etcdctl set /config/app/dev/my.name example
-$ etcdctl set /config/app/dev/my.hostname localhost
-$ etcdctl set /config/app/dev/my.api.key abcdef0123456789
+$ etcdctl put /config/app/dev/my.name example
+$ etcdctl put /config/app/dev/my.hostname localhost
+$ etcdctl put /config/app/dev/my.api.key abcdef0123456789
 $ # Create the test settings
-$ etcdctl set /config/app/test/my.hostname test.example.com
+$ etcdctl put /config/app/test/my.hostname test.example.com
 $ # Tell it to inherit from the development settings
-$ etcdctl set /config/app/test/config.inherit /config/app/dev/
+$ etcdctl put /config/app/test/config.inherit /config/app/dev/
 $ # Configure Pyconfig to use the test configuration
 $ export PYCONFIG_ETCD_PREFIX="/config/app/test/"
 $ export PYCONFIG_ETCD_HOSTS="127.0.0.1:2379"

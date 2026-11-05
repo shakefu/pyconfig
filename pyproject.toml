@@ -18,7 +18,11 @@ pyconfig = "pyconfig.scripts:main"
 
 [dependency-groups]
 etcd = [
-    "python-etcd>=0.4.5",
+    "etcd3 >=0.12.0, <0.13.0",
+    # etcd3 0.12.0 ships protobuf code generated with protoc < 3.19, which
+    # breaks on protobuf >= 4 ("Descriptors cannot be created directly");
+    # hold protobuf on the last 3.20.x release
+    "protobuf >=3.20.3, <3.21",
 ]
 dev = [
     "configargparse >=1.9, <2.0",
