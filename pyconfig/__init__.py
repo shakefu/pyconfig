@@ -353,6 +353,10 @@ class etcd(object):
         """
         Handle creating the new etcd client instance and other business.
 
+        Note that the etcd3 client (etcd v3 API) only supports connecting to
+        a single server, so if multiple hosts are given, only the first one
+        is used.
+
         :param hosts: Host string or list of hosts (default: `'127.0.0.1:2379'`)
         :param cacert: CA cert filename (optional)
         :param client_cert: Client cert filename (optional)
@@ -364,9 +368,9 @@ class etcd(object):
         """
         # Try to get the etcd module
         try:
-            import etcd
+            import etcd3
 
-            self.module = etcd
+            self.module = etcd3
         except ImportError:
             pass
 
@@ -397,32 +401,43 @@ class etcd(object):
         if hosts is None:
             return
 
-        kw = {}
-        # Need this when passing a list of hosts to python-etcd, which we
-        # always do, even if it's a list of one
-        kw["allow_reconnect"] = True
+        # The etcd3 client connects to a single server, so if we were given
+        # multiple hosts, we can only use the first one
+        host, port = hosts[0]
 
-        # Grab optional protocol argument
-        if protocol:
-            kw["protocol"] = protocol
+        kw = {}
 
         # Add auth to constructor if we got it
-        if username:
-            kw["username"] = username
-        if password:
+        if username and password:
+            kw["user"] = username
             kw["password"] = password
+
+        # The etcd3 client has no protocol argument -- it uses TLS implicitly
+        # when certificates are given -- so we can only warn when HTTPS was
+        # requested without any certificates
+        if protocol == "https" and not cacert and not client_cert:
+            log.warning(
+                "PYCONFIG_ETCD_PROTOCOL is 'https', but no certificates were "
+                "provided; the etcd3 client only uses TLS when certificates "
+                "are given"
+            )
 
         # Assign the SSL args if we have 'em
         if cacert:
             kw["ca_cert"] = os.path.abspath(cacert)
         if client_cert and client_key:
-            kw["cert"] = (os.path.abspath(client_cert), os.path.abspath(client_key))
-        elif client_cert:
-            kw["cert"] = os.path.abspath(client_cert)
-        if cacert or client_cert or client_key:
-            kw["protocol"] = "https"
+            kw["cert_cert"] = os.path.abspath(client_cert)
+            kw["cert_key"] = os.path.abspath(client_key)
+        elif client_cert or client_key:
+            # The etcd3 client requires the client cert and key together, and
+            # a CA cert to enable TLS, so one alone can't do anything useful
+            log.warning(
+                "Both a client cert and client key are required for client "
+                "authentication with the etcd3 client; ignoring the "
+                "incomplete certificate arguments"
+            )
 
-        self.client = self.module.Client(hosts, **kw)
+        self.client = self.module.client(host, port, **kw)
 
     def load(self, prefix=None, depth=None):
         """
@@ -443,19 +458,22 @@ class etcd(object):
             self.start_watching()
 
         log.info("Loading from etcd %r", prefix)
-        try:
-            result = self.client.get(prefix)
-        except self.module.EtcdKeyNotFound:
-            result = None
+        # Get all the key/value pairs under the prefix. The etcd3 client
+        # returns an empty result when there's nothing there (its v2
+        # equivalent raised EtcdKeyNotFound).
+        result = list(self.client.get_prefix(prefix))
         if not result:
             log.info("No configuration found")
             return {}
 
         # Iterate over the returned keys from etcd
         update = {}
-        for item in result.children:
-            key = item.key
-            value = item.value
+        for item in result:
+            # The etcd3 client returns keys and values as bytes
+            value, metadata = item
+            key = metadata.key.decode("utf-8")
+            if isinstance(value, bytes):
+                value = value.decode("utf-8")
             # Try to parse them as JSON strings, just in case it works
             try:
                 value = pytool.json.from_json(value)
@@ -492,7 +510,11 @@ class etcd(object):
         """
         if not self.watching:
             raise StopIteration()
-        return self.client.eternal_watch(self.prefix, recursive=True)
+        # watch_prefix returns a tuple of the events iterator and a cancel
+        # function. We never cancel the watch, matching the old python-etcd
+        # eternal_watch behavior.
+        events, _ = self.client.watch_prefix(self.prefix)
+        return events
 
     def start_watching(self):
         """Begins watching etcd for changes."""
@@ -524,7 +546,7 @@ class etcd(object):
             # Coerce ports to int
             hosts = [(host[0], int(host[1])) for host in hosts]
 
-        # The python-etcd client explicitly checks for a tuple type
+        # The tests (and python-etcd before us) expect a tuple of tuples
         return tuple(hosts)
 
     def _parse_jetconfig(self):
@@ -584,7 +606,7 @@ class etcd(object):
 class Watcher(threading.Thread):
     """
     This is the threaded watching functionality. We have to have this be
-    threaded since the watching method in python-etcd blocks while waiting for
+    threaded since watching in the etcd3 client blocks while waiting for
     changes.
 
     """
@@ -599,15 +621,20 @@ class Watcher(threading.Thread):
             return
 
         for event in etcd().get_watcher():
-            # We ignore all the events except for 'set', which changes them
-            if event.action != "set":
+            # We ignore all the events except puts, which change values
+            if not isinstance(event, etcd().module.events.PutEvent):
                 continue
 
-            # Strip the prefix off the key name
-            key = event.key.replace(etcd().prefix, "", 1)
+            # Strip the prefix off the key name (etcd3 returns the key as
+            # bytes)
+            key = event.key.decode("utf-8")
+            key = key.replace(etcd().prefix, "", 1)
 
-            # Try to coerce the value from JSON
+            # Try to coerce the value from JSON (etcd3 returns the value as
+            # bytes)
             value = event.value
+            if isinstance(value, bytes):
+                value = value.decode("utf-8")
             try:
                 value = pytool.json.from_json(value)
             except Exception:
