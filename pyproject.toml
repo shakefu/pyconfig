@@ -7,7 +7,7 @@ license = "MIT"
 authors = [
     {name = "Jacob Alheid", email = "shakefu@gmail.com"},
 ]
-requires-python = ">=3.9,<4.0"
+requires-python = ">=3.10,<4.0"
 dependencies = [
     "pytool>=6.0.3",
     "simplejson >=3.19.2, <4.0.0",
@@ -21,14 +21,14 @@ etcd = [
     "python-etcd>=0.4.5",
 ]
 dev = [
-    "configargparse >=1.7, <2.0",
-    "coverage >=6.5.0, <7.0.0",
-    "coveralls >=3.3.1, <4.0.0",
-    "pre-commit >=4.2.0, <5.0.0",
-    "pytest >=8.4.0, <9.0.0",
-    "pytest-cov >=4.1.0, <5.0.0",
-    "pytest-mock >=3.14.0, <4.0.0",
-    "ruff>=0.12.0",
+    "configargparse >=1.9, <2.0",
+    "coverage >=7.0.0, <8.0.0",
+    "coveralls >=4.0.0, <5.0.0",
+    "pre-commit >=4.6.2, <5.0.0",
+    "pytest >=9.0.0, <10.0.0",
+    "pytest-cov >=7.0.0, <8.0.0",
+    "pytest-mock >=3.17.0, <4.0.0",
+    "ruff>=0.17.0",
 ]
 docs = [
 ]
@@ -42,3 +42,14 @@ addopts = "--cov --cov-report term-missing"
 
 [tool.coverage.run]
 source = ["pyconfig"]
+
+[tool.ruff]
+# Ruff 0.17+ also formats Python code blocks in Markdown files by default;
+# the ruff version pinned in .pre-commit-config.yaml does not.
+extend-exclude = ["*.md"]
+
+[tool.ruff.lint]
+# Ruff 0.17+ enables many more rules by default (UP, B, S, BLE, SIM, ...).
+# Pin to the classic default rule set to match the pre-commit hook, which is
+# pinned to ruff v0.11.13 (E4, E7, E9, F).
+select = ["E4", "E7", "E9", "F"]
