@@ -81,8 +81,21 @@ preferred method for configuring Pyconfig to work with etcd is via ENV
 variables, since they must be set as early as possible. It is also possible to
 use the Python API to make Pyconfig work with etcd.
 
+The etcd3 library is optional and not installed with Pyconfig. Install it
+alongside a compatible protobuf, since etcd3 0.12 does not work with
+protobuf 4 or later:
+
+```bash
+pip install "etcd3>=0.12.0,<0.13.0" "protobuf>=3.20.3,<3.21"
+```
+
+If etcd3 is installed but fails to import (for example, because of an
+incompatible protobuf), Pyconfig logs a warning and runs without etcd support.
+
 Pyconfig uses a directory namespace to store its dot notation configuration key
-names. By default, that namespace is `/config/`.
+names. By default, that namespace is `/config/`. Only the keys directly under
+the namespace are loaded; keys in nested namespaces (like
+`/config/app/dev/my.name` when the namespace is `/config/app/`) are ignored.
 
 At a minimum, `PYCONFIG_ETCD_HOSTS` must be set to get Pyconfig to try to
 read a configuration from etcd using the default settings.
@@ -115,20 +128,24 @@ at a time in this way.
 - `PYCONFIG_ETCD_HOSTS` - A comma separated list of hosts, like
   `10.0.0.1:2379,10.0.0.2:2379`. Note that the etcd3 client only connects to
   a single server, so only the first host is used.
-- `PYCONFIG_ETCD_CACERT` - CA cert file to use for SSL
-- `PYCONFIG_ETCD_CERT` - Client cert file to use for SSL client authentication
+- `PYCONFIG_ETCD_CACERT` - CA cert file to use for SSL. The etcd3 client only
+  uses TLS when this is set.
+- `PYCONFIG_ETCD_CERT` - Client cert file to use for SSL client
+  authentication. Requires `PYCONFIG_ETCD_KEY` and `PYCONFIG_ETCD_CACERT`;
+  without a CA cert, Pyconfig logs a warning and connects without TLS.
 - `PYCONFIG_ETCD_KEY` - Client private key file to use for SSL client auth
 - `PYCONFIG_ETCD_WATCH` - If this is set to a truthy value (a non-empty
   string), then pyconfig will keep the local configuration synchronized with
   etcd (_Version added: 3.1.0_)
 - `PYCONFIG_ETCD_PROTOCOL` - This should be a string of the form `https` or
-  `http`. Note that the etcd3 client uses TLS implicitly whenever
-  certificates are provided, and cannot force HTTPS without them; if this is
-  set to `https` without any certificates, Pyconfig will log a warning and
-  connect without TLS. (_Version added: 3.2.0_)
+  `http`. Note that the etcd3 client uses TLS only when a CA cert is
+  provided, and cannot force HTTPS without one; if this is set to `https`
+  without `PYCONFIG_ETCD_CACERT`, Pyconfig will log a warning and connect
+  without TLS. (_Version added: 3.2.0_)
 - `PYCONFIG_ETCD_AUTH` - Set this to authenticate with a username and
   password. This should be a string of the format `username:password`.
-  (_Version added: 3.2.0_)
+  Without `PYCONFIG_ETCD_CACERT` the auth token is sent unencrypted. Expired
+  auth tokens are refreshed automatically. (_Version added: 3.2.0_)
 
 **Inheritance:**
 

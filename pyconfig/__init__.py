@@ -318,6 +318,7 @@ class etcd(object):
         client=None,
         module=None,
         watcher=None,
+        _client_args=None,
     )
 
     def __init__(self, *args, **kwargs):
@@ -366,13 +367,22 @@ class etcd(object):
         :type key: str
 
         """
-        # Try to get the etcd module
+        # Try to get the etcd module. etcd3 is optional, and it can fail to
+        # import with errors other than ImportError -- notably a TypeError
+        # when it's installed alongside protobuf >= 4 -- which must not break
+        # pyconfig for apps that aren't using etcd
         try:
             import etcd3
 
             self.module = etcd3
         except ImportError:
             pass
+        except Exception as err:
+            log.warning(
+                "etcd3 is installed but failed to import, so etcd support is "
+                "disabled (etcd3 0.12 requires protobuf < 3.21): %s",
+                err,
+            )
 
         if not self.module:
             return
@@ -411,33 +421,90 @@ class etcd(object):
         if username and password:
             kw["user"] = username
             kw["password"] = password
-
-        # The etcd3 client has no protocol argument -- it uses TLS implicitly
-        # when certificates are given -- so we can only warn when HTTPS was
-        # requested without any certificates
-        if protocol == "https" and not cacert and not client_cert:
+        elif username or password:
             log.warning(
-                "PYCONFIG_ETCD_PROTOCOL is 'https', but no certificates were "
-                "provided; the etcd3 client only uses TLS when certificates "
-                "are given"
+                "PYCONFIG_ETCD_AUTH must be of the form 'username:password'; "
+                "ignoring the incomplete credentials"
             )
 
-        # Assign the SSL args if we have 'em
+        # The etcd3 client has no protocol argument, and only uses TLS when
+        # it's given a CA cert -- a client cert and key without one are
+        # silently ignored and the connection is made in plaintext. Since we
+        # can't use TLS without a CA cert, warn when it was asked for.
         if cacert:
             kw["ca_cert"] = os.path.abspath(cacert)
-        if client_cert and client_key:
-            kw["cert_cert"] = os.path.abspath(client_cert)
-            kw["cert_key"] = os.path.abspath(client_key)
-        elif client_cert or client_key:
-            # The etcd3 client requires the client cert and key together, and
-            # a CA cert to enable TLS, so one alone can't do anything useful
+            if client_cert and client_key:
+                kw["cert_cert"] = os.path.abspath(client_cert)
+                kw["cert_key"] = os.path.abspath(client_key)
+            elif client_cert or client_key:
+                # The etcd3 client requires the client cert and key together
+                log.warning(
+                    "Both a client cert and client key are required for "
+                    "client authentication with the etcd3 client; ignoring "
+                    "the incomplete certificate arguments"
+                )
+        elif client_cert or client_key or protocol == "https":
             log.warning(
-                "Both a client cert and client key are required for client "
-                "authentication with the etcd3 client; ignoring the "
-                "incomplete certificate arguments"
+                "TLS was requested (via PYCONFIG_ETCD_PROTOCOL, "
+                "PYCONFIG_ETCD_CERT or PYCONFIG_ETCD_KEY), but the etcd3 "
+                "client only uses TLS when a CA cert (PYCONFIG_ETCD_CACERT) "
+                "is given; connecting without TLS and ignoring any client "
+                "certificate"
             )
 
-        self.client = self.module.client(host, port, **kw)
+        self._client_args = (host, port, kw)
+        self._connect()
+
+    def _connect(self):
+        """
+        Create (or re-create) the etcd3 client from the arguments that
+        :meth:`init` worked out.
+
+        """
+        host, port, kw = self._client_args
+        client = self.module.client(host, port, **kw)
+
+        if "user" in kw and "ca_cert" not in kw:
+            # The etcd3 client sends its auth token both as gRPC call
+            # credentials and as plain request metadata. gRPC refuses to send
+            # call credentials over a plaintext channel, failing every
+            # request, so drop them and rely on the metadata, which works
+            # without TLS (as python-etcd's basic auth over HTTP did).
+            client.call_credentials = None
+            client.watcher._credentials = None
+
+        self.client = client
+
+    def _auth_expired(self, err):
+        """
+        Return whether `err` is etcd rejecting our (expired) auth token.
+
+        """
+        if not self._client_args or "user" not in self._client_args[2]:
+            return False
+        # grpc.RpcError has a code() method returning a grpc.StatusCode
+        code = getattr(err, "code", None)
+        if not callable(code):
+            return False
+        return getattr(code(), "name", None) == "UNAUTHENTICATED"
+
+    def _fetch_prefix(self, prefix):
+        """
+        Return all the (value, metadata) pairs under `prefix`, refreshing the
+        auth token if it has expired.
+
+        """
+        try:
+            return list(self.client.get_prefix(prefix))
+        except Exception as err:
+            # The etcd3 client authenticates once when it's created, and
+            # never refreshes its token, which etcd expires (after 5 minutes
+            # of inactivity by default), so reconnect and retry once
+            if not self._auth_expired(err):
+                raise
+            log.info("etcd auth token expired, reconnecting")
+            self._connect()
+            return list(self.client.get_prefix(prefix))
 
     def load(self, prefix=None, depth=None):
         """
@@ -461,7 +528,7 @@ class etcd(object):
         # Get all the key/value pairs under the prefix. The etcd3 client
         # returns an empty result when there's nothing there (its v2
         # equivalent raised EtcdKeyNotFound).
-        result = list(self.client.get_prefix(prefix))
+        result = self._fetch_prefix(prefix)
         if not result:
             log.info("No configuration found")
             return {}
@@ -480,13 +547,20 @@ class etcd(object):
             except Exception:
                 pass
 
+            # Strip off the prefix that we're using (before lower-casing, so a
+            # prefix with upper-case characters still matches)
+            if key.startswith(prefix):
+                key = key[len(prefix) :]
+
+            # get_prefix is recursive, but etcd v2's get returned only the
+            # direct children of the prefix, so skip keys in nested
+            # "directories" (e.g. other environments under this one)
+            if "/" in key:
+                continue
+
             # Make the key lower-case if we're not case-sensitive
             if not self.case_sensitive:
                 key = key.lower()
-
-            # Strip off the prefix that we're using
-            if key.startswith(prefix):
-                key = key[len(prefix) :]
 
             # Store the key/value to update the config
             update[key] = value
@@ -629,6 +703,10 @@ class Watcher(threading.Thread):
             # bytes)
             key = event.key.decode("utf-8")
             key = key.replace(etcd().prefix, "", 1)
+
+            # Ignore keys in nested "directories", matching load()
+            if "/" in key:
+                continue
 
             # Try to coerce the value from JSON (etcd3 returns the value as
             # bytes)
